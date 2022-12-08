@@ -2,7 +2,7 @@ import pygame
 from network import Network
 
 
-class Player():
+class Player:
     width = height = 50
 
     def __init__(self, startx, starty, color=(255, 0, 0), active=0):
@@ -41,7 +41,7 @@ class Game:
         self.net = Network()
         self.width = w
         self.height = h
-        self.player = Player(50, 50, active=0, color=(0, 200, 0))
+        self.player = Player(50, 50, active=1, color=(0, 200, 0))
         self.player2 = Player(100, 100, active=0, color=(200, 0, 0))
         self.canvas = Canvas(self.width, self.height, "Testing...")
 

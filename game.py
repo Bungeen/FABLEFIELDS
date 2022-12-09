@@ -12,7 +12,7 @@ class Player:
     def __init__(self, startx, starty, color=(255, 0, 0), active=0):
         self.x = startx
         self.y = starty
-        self.velocity = 2
+        self.velocity = 0.002
         self.color = color
         self.is_active = bool(active)
 
@@ -20,9 +20,17 @@ class Player:
         tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
         return tmp_size
 
+    def get_correct_coordinates(self, type_coordinate, canvas):
+        if type_coordinate == 'x':
+            return self.x * canvas.get_width()
+        if type_coordinate == 'y':
+            return self.y * canvas.get_height()
+        return "ERROR"
+
     def draw(self, canvas):
         tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
-        pygame.draw.rect(canvas, self.color, (self.x, self.y, tmp_size, tmp_size), 0)
+        pygame.draw.rect(canvas, self.color,
+                         (self.x * canvas.get_width(), self.y * canvas.get_height(), tmp_size, tmp_size), 0)
 
     def move(self, dirn):
         """
@@ -50,8 +58,8 @@ class Game:
         self.net = Network()
         self.width = w
         self.height = h
-        self.player = Player(50, 50, active=1, color=(0, 200, 0))
-        self.player2 = Player(100, 100, active=0, color=(200, 0, 0))
+        self.player = Player(0.05, 0.05, active=1, color=(0, 200, 0))
+        self.player2 = Player(0.05, 0.05, active=0, color=(200, 0, 0))
         self.canvas = Canvas(self.width, self.height, is_fullscreen)
 
     def run(self):
@@ -86,21 +94,21 @@ class Game:
             keys = pygame.key.get_pressed()
 
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                if self.player.x <= self.canvas.get_canvas().get_width() - self.player.get_size(
-                        self.canvas.get_canvas()):
+                if self.player.get_correct_coordinates('x', self.canvas.get_canvas())\
+                        <= self.canvas.get_canvas().get_width() - self.player.get_size(self.canvas.get_canvas()):
                     self.player.move(0)
 
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                if self.player.x >= 0:
+                if self.player.get_correct_coordinates('x', self.canvas.get_canvas()) >= 0:
                     self.player.move(1)
 
             if keys[pygame.K_UP] or keys[pygame.K_w]:
-                if self.player.y >= 0:
+                if self.player.get_correct_coordinates('y', self.canvas.get_canvas()) >= 0:
                     self.player.move(2)
 
             if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                if self.player.y <= self.canvas.get_canvas().get_height() - self.player.get_size(
-                        self.canvas.get_canvas()):
+                if self.player.get_correct_coordinates('y', self.canvas.get_canvas())\
+                        <= self.canvas.get_canvas().get_height() - self.player.get_size(self.canvas.get_canvas()):
                     self.player.move(3)
 
             print(self.canvas.get_canvas().get_height(), self.player.y)

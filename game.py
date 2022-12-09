@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 from network import Network
 
@@ -37,13 +39,13 @@ class Player:
 
 class Game:
 
-    def __init__(self, w, h):
+    def __init__(self, w, h, is_fullscreen=False):
         self.net = Network()
         self.width = w
         self.height = h
         self.player = Player(50, 50, active=1, color=(0, 200, 0))
         self.player2 = Player(100, 100, active=0, color=(200, 0, 0))
-        self.canvas = Canvas(self.width, self.height, "Testing...")
+        self.canvas = Canvas(self.width, self.height, "Testing...", is_fullscreen)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -54,6 +56,7 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
+                    sys.exit()
 
                 if event.type == pygame.K_ESCAPE:
                     run = False
@@ -93,7 +96,8 @@ class Game:
                 self.player2.draw(self.canvas.get_canvas())
             self.canvas.update()
 
-        pygame.quit()
+
+        # pygame.quit()
 
     def send_data(self):
         """
@@ -115,11 +119,24 @@ class Game:
 
 class Canvas:
 
-    def __init__(self, w, h, name="None"):
+    def __init__(self, w, h, name="None", is_fullscreen=False):
         self.width = w
         self.height = h
-        self.screen = pygame.display.set_mode((w, h))
+        self.is_fullscreen = is_fullscreen
+        self.screen = None
+        self.initialization_screen()
+        # self.screen = pygame.display.set_mode((w, h))
         pygame.display.set_caption(name)
+
+    def initialization_screen(self):
+        if self.is_fullscreen:
+            print('FULL')
+            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        else:
+            print('RESIZE')
+            self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+            self.width = self.screen.get_width()
+            self.height = self.screen.get_height()
 
     @staticmethod
     def update():

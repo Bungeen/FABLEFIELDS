@@ -1,6 +1,10 @@
 import pygame
 import sys
 
+from button import Button
+
+import game
+
 
 class Menu:
     def __init__(self, w, h, is_fullscreen=False):
@@ -36,9 +40,26 @@ class Menu:
         # game loop
         while self.is_running:
             self.screen.fill((52, 78, 91))
-            self.draw_text(self.screen.get_width() / 2, self.screen.get_height() / 4, 'MENU', self.font, self.TEXT_COLOR)
+            self.draw_text(self.screen.get_width() / 2, self.screen.get_height() / 4, 'MENU', self.font,
+                           self.TEXT_COLOR)
+
+            MENU_MOUSE_POSITION = pygame.mouse.get_pos()
+
+            PLAY_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"),
+                                 pos=(self.screen.get_width() / 2, self.screen.get_height() / 2),
+                                 text_input="PLAY", font=self.font, base_color="#d7fcd4", hovering_color="White")
+            buttons = []
+            buttons += [PLAY_BUTTON]
+            for button in buttons:
+                button.change_color(MENU_MOUSE_POSITION)
+                button.update(self.screen)
+
             # event-handler
             for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if PLAY_BUTTON.check_for_input(MENU_MOUSE_POSITION):
+                        g = game.Game(self.screen.get_width(), self.screen.get_height(), self.is_fullscreen)
+                        g.run()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         print(self.is_fullscreen)

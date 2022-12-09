@@ -9,6 +9,7 @@ import game
 class Menu:
     def __init__(self, w, h, is_fullscreen=False):
         pygame.font.init()
+        pygame.init()
         self.width = w
         self.height = h
         self.is_fullscreen = is_fullscreen

@@ -1,7 +1,9 @@
 import sys
 
 import pygame
+
 from network import Network
+from menu import Menu
 
 
 class Player:
@@ -14,8 +16,13 @@ class Player:
         self.color = color
         self.is_active = bool(active)
 
-    def draw(self, g):
-        pygame.draw.rect(g, self.color, (self.x, self.y, self.width, self.height), 0)
+    def get_size(self, canvas):
+        tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
+        return tmp_size
+
+    def draw(self, canvas):
+        tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
+        pygame.draw.rect(canvas, self.color, (self.x, self.y, tmp_size, tmp_size), 0)
 
     def move(self, dirn):
         """
@@ -45,7 +52,7 @@ class Game:
         self.height = h
         self.player = Player(50, 50, active=1, color=(0, 200, 0))
         self.player2 = Player(100, 100, active=0, color=(200, 0, 0))
-        self.canvas = Canvas(self.width, self.height, "Testing...", is_fullscreen)
+        self.canvas = Canvas(self.width, self.height, is_fullscreen)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -54,6 +61,21 @@ class Game:
             clock.tick(60)
 
             for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F10:
+                        print(self.canvas.is_fullscreen)
+                        self.canvas.is_fullscreen = not self.canvas.is_fullscreen
+                        self.canvas.initialization_screen()
+                    if event.key == pygame.K_ESCAPE:
+                        run = False
+                        m = Menu(self.canvas.width, self.canvas.height, self.canvas.is_fullscreen)
+                        m.run()
+                        return
+                if event.type == pygame.VIDEORESIZE:
+                    if not self.canvas.is_fullscreen:
+                        self.canvas.width = event.w
+                        self.canvas.height = event.h
+                        self.canvas.initialization_screen()
                 if event.type == pygame.QUIT:
                     run = False
                     sys.exit()
@@ -64,27 +86,27 @@ class Game:
             keys = pygame.key.get_pressed()
 
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                if self.player.x <= self.width - self.player.velocity:
+                if self.player.x <= self.canvas.get_canvas().get_width() - self.player.get_size(
+                        self.canvas.get_canvas()):
                     self.player.move(0)
 
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                if self.player.x >= self.player.velocity:
+                if self.player.x >= 0:
                     self.player.move(1)
 
             if keys[pygame.K_UP] or keys[pygame.K_w]:
-                if self.player.y >= self.player.velocity:
+                if self.player.y >= 0:
                     self.player.move(2)
 
             if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                if self.player.y <= self.height - self.player.velocity:
+                if self.player.y <= self.canvas.get_canvas().get_height() - self.player.get_size(
+                        self.canvas.get_canvas()):
                     self.player.move(3)
 
-            print(self.player.is_active)
+            print(self.canvas.get_canvas().get_height(), self.player.y)
 
             # Send Network Stuff
             self.player2.x, self.player2.y, self.player2.is_active = self.parse_data(self.send_data())
-
-            print(self.player.is_active)
 
             # Update Canvas
             self.canvas.draw_background()
@@ -95,7 +117,6 @@ class Game:
                 print('Act2')
                 self.player2.draw(self.canvas.get_canvas())
             self.canvas.update()
-
 
         # pygame.quit()
 
@@ -117,37 +138,26 @@ class Game:
             return 0, 0, 0
 
 
-class Canvas:
+class Canvas(Menu):
 
-    def __init__(self, w, h, name="None", is_fullscreen=False):
-        self.width = w
-        self.height = h
-        self.is_fullscreen = is_fullscreen
+    def __init__(self, w, h, is_fullscreen=False, name="None"):
+        super().__init__(w, h, is_fullscreen)
         self.screen = None
         self.initialization_screen()
+        print(self.width, self.height)
         # self.screen = pygame.display.set_mode((w, h))
-        pygame.display.set_caption(name)
-
-    def initialization_screen(self):
-        if self.is_fullscreen:
-            print('FULL')
-            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        else:
-            print('RESIZE')
-            self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-            self.width = self.screen.get_width()
-            self.height = self.screen.get_height()
+        # pygame.display.set_caption(name)
 
     @staticmethod
     def update():
         pygame.display.update()
 
-    def draw_text(self, text, size, x, y):
-        pygame.font.init()
-        font = pygame.font.SysFont("comicsans", size)
-        render = font.render(text, 1, (0, 0, 0))
-
-        self.screen.draw(render, (x, y))
+    # def draw_text(self, text, size, x, y):
+    #     pygame.font.init()
+    #     font = pygame.font.SysFont("comicsans", size)
+    #     render = font.render(text, 1, (0, 0, 0))
+    #
+    #     self.screen.draw(render, (x, y))
 
     def get_canvas(self):
         return self.screen

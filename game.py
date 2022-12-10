@@ -24,11 +24,14 @@ class Player(pygame.sprite.Sprite):
         super().__init__(group)
         sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
-        self.image = sprite_sheet.get_image(0, 32, 32, 3, (0, 0, 0))
-        self.image_top = sprite_sheet.get_image(0, 32, 32, 3, (0, 0, 0))
-        self.image_left = sprite_sheet.get_image(2, 32, 32, 3, (0, 0, 0))
-        self.image_right = sprite_sheet.get_image(1, 32, 32, 3, (0, 0, 0))
-        self.image_behind = sprite_sheet.get_image(3, 32, 32, 3, (0, 0, 0))
+        self.image = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
+        self.image_top = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
+        self.image_left = sprite_sheet.get_image(2, 32, 32, 4.5, (0, 0, 0))
+        self.image_right = sprite_sheet.get_image(1, 32, 32, 4.5, (0, 0, 0))
+        self.image_behind = sprite_sheet.get_image(3, 32, 32, 4.5, (0, 0, 0))
+        size = max(int(pygame.display.get_surface().get_width() / (13 * 32)),
+                   int(pygame.display.get_surface().get_height() / (8 * 32)))
+        self.resize_initialization(size)
         self.direction = pygame.math.Vector2()
         self.speed = 5
         self.rect = self.image.get_rect()
@@ -38,6 +41,25 @@ class Player(pygame.sprite.Sprite):
     # NETWORKING BREAKING
     #     keys = pygame.key.get_pressed()
     #     # NETWORKING BREAKING
+
+    def change_view(self):
+        if self.direction.x == -1:
+            self.image = self.image_left
+        elif self.direction.x == 1:
+            self.image = self.image_right
+        elif self.direction.y == 1:
+            self.image = self.image_top
+        elif self.direction.y == -1:
+            self.image = self.image_behind
+
+    def resize_initialization(self, size):
+        sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
+        sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+        self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+        self.image_top = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+        self.image_left = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
+        self.image_right = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
+        self.image_behind = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
 
     def move(self, dirn):
         """
@@ -68,12 +90,22 @@ class CameraGroup(pygame.sprite.Group):
         super().__init__()
         self.display_surface = pygame.display.get_surface()
         self.ground_surf = pygame.image.load("graphics/ground.png").convert()
+        # size = max(int(pygame.display.get_surface().get_width() / (13 * 32)),
+        #            int(pygame.display.get_surface().get_height() / (8 * 32)))
+        # self.ground_surf = pygame.transform.scale(self.ground_surf, (
+        # self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
         self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
         # Offset
         self.offset = pygame.math.Vector2()
         self.half_width = self.display_surface.get_size()[0] // 2
         self.half_height = self.display_surface.get_size()[1] // 2
+
+    def resize_initialization(self, size):
+        self.ground_surf = pygame.image.load("graphics/ground.png").convert()
+        self.ground_surf = pygame.transform.scale(self.ground_surf, (
+            self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
+        self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
     def center_target_camera(self, target):
         self.offset.x = target.rect.centerx - self.half_width
@@ -118,6 +150,15 @@ class Game:
                         print(self.canvas.is_fullscreen)
                         self.canvas.is_fullscreen = not self.canvas.is_fullscreen
                         self.canvas.initialization_screen()
+                        if self.canvas.is_fullscreen:
+                            infoObject = pygame.display.Info()
+                            size = max(infoObject.current_w / (13 * 32),
+                                       infoObject.current_h / (8 * 32))
+                        else:
+                            size = max(self.canvas.get_canvas().get_width() / (13 * 32),
+                                       self.canvas.get_canvas().get_height() / (8 * 32))
+                        print(size)
+                        self.player.resize_initialization(size)
                     if event.key == pygame.K_ESCAPE:
                         run = False
                         m = Menu(self.canvas.width, self.canvas.height, self.canvas.is_fullscreen)
@@ -128,10 +169,19 @@ class Game:
                         self.canvas.width = event.w
                         self.canvas.height = event.h
                         self.canvas.initialization_screen()
+                    if self.canvas.is_fullscreen:
+                        infoObject = pygame.display.Info()
+                        size = max(infoObject.current_w / (13 * 32),
+                                   infoObject.current_h / (8 * 32))
+                    else:
+                        size = max(self.canvas.get_canvas().get_width() / (13 * 32),
+                                   self.canvas.get_canvas().get_height() / (8 * 32))
+                    print(size)
+                    self.player.resize_initialization(size)
+                    # self.camera_group.resize_initialization(size)
                 if event.type == pygame.QUIT:
                     run = False
                     sys.exit()
-            print(self.player2.rect)
 
             keys = pygame.key.get_pressed()
 
@@ -153,7 +203,7 @@ class Game:
             else:
                 self.player.direction.x = 0
             self.player.activating()
-
+            self.player.change_view()
 
             # Send Network Stuff
             self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data(self.send_data())
@@ -196,22 +246,12 @@ class Canvas(Menu):
 
     def __init__(self, w, h, is_fullscreen=False, name="None"):
         super().__init__(w, h, is_fullscreen)
-        self.screen = None
         self.initialization_screen()
         print(self.width, self.height)
-        # self.screen = pygame.display.set_mode((w, h))
-        # pygame.display.set_caption(name)
 
     @staticmethod
     def update():
         pygame.display.update()
-
-    # def draw_text(self, text, size, x, y):
-    #     pygame.font.init()
-    #     font = pygame.font.SysFont("comicsans", size)
-    #     render = font.render(text, 1, (0, 0, 0))
-    #
-    #     self.screen.draw(render, (x, y))
 
     def get_canvas(self):
         return self.screen

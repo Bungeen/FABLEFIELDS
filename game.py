@@ -1,19 +1,39 @@
+import os
 import sys
 
 import pygame
+
+import spritesheet
 
 from network import Network
 from menu import Menu
 
 
-class Player:
-    width = height = 50
+def load_image(name, colorkey=None):
+    fullname = os.path.join('assets', name)
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    return image
 
-    def __init__(self, startx, starty, color=(255, 0, 0), active=0):
-        self.x = startx
-        self.y = starty
-        self.velocity = 0.002
-        self.color = color
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, group, start_x, start_y, player_id=0, active=0):
+        super().__init__(group)
+        sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
+        sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+
+        BLACK = (0, 0, 0)
+
+        image = sprite_sheet.get_image(0, 32, 32, 3, BLACK)
+        self.x = start_x
+        self.y = start_y
+        self.velocity = 10
+        self.image = image
+        self.rect = self.image.get_rect()
         self.is_active = bool(active)
 
     def get_size(self, canvas):
@@ -22,15 +42,15 @@ class Player:
 
     def get_correct_coordinates(self, type_coordinate, canvas):
         if type_coordinate == 'x':
-            return self.x * canvas.get_width()
+            return self.x #* canvas.get_width()
         if type_coordinate == 'y':
-            return self.y * canvas.get_height()
+            return self.y #* canvas.get_height()
         return "ERROR"
 
-    def draw(self, canvas):
-        tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
-        pygame.draw.rect(canvas, self.color,
-                         (self.x * canvas.get_width(), self.y * canvas.get_height(), tmp_size, tmp_size), 0)
+    # def draw(self, canvas):
+    #     tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
+    #     pygame.draw.rect(canvas, self.color,
+    #                      (self.x * canvas.get_width(), self.y * canvas.get_height(), tmp_size, tmp_size), 0)
 
     def move(self, dirn):
         """
@@ -55,12 +75,14 @@ class Player:
 class Game:
 
     def __init__(self, w, h, is_fullscreen=False):
-        self.net = Network()
+        pygame.init()
         self.width = w
         self.height = h
-        self.player = Player(0.05, 0.05, active=1, color=(0, 200, 0))
-        self.player2 = Player(0.05, 0.05, active=0, color=(200, 0, 0))
         self.canvas = Canvas(self.width, self.height, is_fullscreen)
+        self.all_sprites = pygame.sprite.Group()
+        self.net = Network()
+        self.player = Player(self.all_sprites, 0.05, 0.05, active=1)
+        self.player2 = Player(self.all_sprites, 0.05, 0.05, active=0)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -94,7 +116,7 @@ class Game:
             keys = pygame.key.get_pressed()
 
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                if self.player.get_correct_coordinates('x', self.canvas.get_canvas())\
+                if self.player.get_correct_coordinates('x', self.canvas.get_canvas()) \
                         <= self.canvas.get_canvas().get_width() - self.player.get_size(self.canvas.get_canvas()):
                     self.player.move(0)
 
@@ -107,7 +129,7 @@ class Game:
                     self.player.move(2)
 
             if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                if self.player.get_correct_coordinates('y', self.canvas.get_canvas())\
+                if self.player.get_correct_coordinates('y', self.canvas.get_canvas()) \
                         <= self.canvas.get_canvas().get_height() - self.player.get_size(self.canvas.get_canvas()):
                     self.player.move(3)
 
@@ -118,12 +140,13 @@ class Game:
 
             # Update Canvas
             self.canvas.draw_background()
-            if self.player.is_active:
-                print('Act')
-                self.player.draw(self.canvas.get_canvas())
-            if self.player2.is_active:
-                print('Act2')
-                self.player2.draw(self.canvas.get_canvas())
+            # if self.player.is_active:
+            #     print('Act')
+            #     self.player.draw(self.canvas.get_canvas())
+            # if self.player2.is_active:
+            #     print('Act2')
+            #     self.player2.draw(self.canvas.get_canvas())
+            self.all_sprites.draw(self.canvas.get_canvas())
             self.canvas.update()
 
         # pygame.quit()

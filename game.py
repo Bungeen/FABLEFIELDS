@@ -19,38 +19,25 @@ def load_image(name, colorkey=None):
     return image
 
 
-
 class Player(pygame.sprite.Sprite):
-    def __init__(self, group, start_x, start_y, player_id=0, active=0):
+    def __init__(self, group, pos, player_id=0, active=0):
         super().__init__(group)
         sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
-
-        BLACK = (0, 0, 0)
-
-        image = sprite_sheet.get_image(0, 32, 32, 3, BLACK)
-        self.x = start_x
-        self.y = start_y
-        self.velocity = 10
-        self.image = image
+        self.image = sprite_sheet.get_image(0, 32, 32, 3, (0, 0, 0))
+        self.image_top = sprite_sheet.get_image(0, 32, 32, 3, (0, 0, 0))
+        self.image_left = sprite_sheet.get_image(2, 32, 32, 3, (0, 0, 0))
+        self.image_right = sprite_sheet.get_image(1, 32, 32, 3, (0, 0, 0))
+        self.image_behind = sprite_sheet.get_image(3, 32, 32, 3, (0, 0, 0))
+        self.direction = pygame.math.Vector2()
+        self.speed = 5
         self.rect = self.image.get_rect()
         self.is_active = bool(active)
+        self.coordinates = pygame.math.Vector2(0, 0)
 
-    def get_size(self, canvas):
-        tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
-        return tmp_size
-
-    def get_correct_coordinates(self, type_coordinate, canvas):
-        if type_coordinate == 'x':
-            return self.x #* canvas.get_width()
-        if type_coordinate == 'y':
-            return self.y #* canvas.get_height()
-        return "ERROR"
-
-    # def draw(self, canvas):
-    #     tmp_size = min(canvas.get_width() / 30, canvas.get_height() / 30)
-    #     pygame.draw.rect(canvas, self.color,
-    #                      (self.x * canvas.get_width(), self.y * canvas.get_height(), tmp_size, tmp_size), 0)
+    # NETWORKING BREAKING
+    #     keys = pygame.key.get_pressed()
+    #     # NETWORKING BREAKING
 
     def move(self, dirn):
         """
@@ -58,18 +45,53 @@ class Player(pygame.sprite.Sprite):
         :return: None
         """
 
-        if dirn == 0:
-            self.x += self.velocity
-        elif dirn == 1:
-            self.x -= self.velocity
-        elif dirn == 2:
-            self.y -= self.velocity
-        else:
-            self.y += self.velocity
+        # if dirn == 0:
+        #     self.x += self.velocity
+        # elif dirn == 1:
+        #     self.x -= self.velocity
+        # elif dirn == 2:
+        #     self.y -= self.velocity
+        # else:
+        #     self.y += self.velocity
         self.activating()
+
+    def update(self):
+        # self.input()
+        self.rect.center += self.direction * self.speed
 
     def activating(self):
         self.is_active = True
+
+
+class CameraGroup(pygame.sprite.Group):
+    def __init__(self):
+        super().__init__()
+        self.display_surface = pygame.display.get_surface()
+        self.ground_surf = pygame.image.load("graphics/ground.png").convert()
+        self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
+
+        # Offset
+        self.offset = pygame.math.Vector2()
+        self.half_width = self.display_surface.get_size()[0] // 2
+        self.half_height = self.display_surface.get_size()[1] // 2
+
+    def center_target_camera(self, target):
+        self.offset.x = target.rect.centerx - self.half_width
+        self.offset.y = target.rect.centery - self.half_height
+
+    def custom_draw(self, player):
+        self.half_width = self.display_surface.get_size()[0] // 2
+        self.half_height = self.display_surface.get_size()[1] // 2
+        self.center_target_camera(player)
+
+        # ground
+        ground_offset = self.ground_rect.topleft - self.offset
+        self.display_surface.blit(self.ground_surf, ground_offset)
+
+        # active elements
+        for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
+            sprite_offset = sprite.rect.topleft - self.offset
+            self.display_surface.blit(sprite.image, sprite_offset)
 
 
 class Game:
@@ -80,16 +102,16 @@ class Game:
         self.height = h
         self.canvas = Canvas(self.width, self.height, is_fullscreen)
         self.all_sprites = pygame.sprite.Group()
+        self.camera_group = CameraGroup()
         self.net = Network()
-        self.player = Player(self.all_sprites, 0.05, 0.05, active=1)
-        self.player2 = Player(self.all_sprites, 0.05, 0.05, active=0)
+        self.player = Player(self.camera_group, (200, 200), active=1)
+        self.player2 = Player(self.camera_group, (200, 200), active=0)
 
     def run(self):
         clock = pygame.time.Clock()
         run = True
         while run:
             clock.tick(60)
-
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
@@ -109,34 +131,32 @@ class Game:
                 if event.type == pygame.QUIT:
                     run = False
                     sys.exit()
-
-                if event.type == pygame.K_ESCAPE:
-                    run = False
+            print(self.player2.rect)
 
             keys = pygame.key.get_pressed()
 
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                if self.player.get_correct_coordinates('x', self.canvas.get_canvas()) \
-                        <= self.canvas.get_canvas().get_width() - self.player.get_size(self.canvas.get_canvas()):
-                    self.player.move(0)
-
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                if self.player.get_correct_coordinates('x', self.canvas.get_canvas()) >= 0:
-                    self.player.move(1)
-
             if keys[pygame.K_UP] or keys[pygame.K_w]:
-                if self.player.get_correct_coordinates('y', self.canvas.get_canvas()) >= 0:
-                    self.player.move(2)
+                self.player.direction.y = -1
+                self.player.coordinates.y += self.player.speed
+            elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                self.player.direction.y = 1
+                self.player.coordinates.y -= self.player.speed
+            else:
+                self.player.direction.y = 0
 
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                if self.player.get_correct_coordinates('y', self.canvas.get_canvas()) \
-                        <= self.canvas.get_canvas().get_height() - self.player.get_size(self.canvas.get_canvas()):
-                    self.player.move(3)
+            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                self.player.direction.x = 1
+                self.player.coordinates.x += self.player.speed
+            elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                self.player.direction.x = -1
+                self.player.coordinates.x -= self.player.speed
+            else:
+                self.player.direction.x = 0
+            self.player.activating()
 
-            print(self.canvas.get_canvas().get_height(), self.player.y)
 
             # Send Network Stuff
-            self.player2.x, self.player2.y, self.player2.is_active = self.parse_data(self.send_data())
+            self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data(self.send_data())
 
             # Update Canvas
             self.canvas.draw_background()
@@ -146,7 +166,10 @@ class Game:
             # if self.player2.is_active:
             #     print('Act2')
             #     self.player2.draw(self.canvas.get_canvas())
-            self.all_sprites.draw(self.canvas.get_canvas())
+            # self.all_sprites.draw(self.canvas.get_canvas())
+            # self.canvas.update()
+            self.camera_group.update()
+            self.camera_group.custom_draw(self.player)
             self.canvas.update()
 
         # pygame.quit()
@@ -156,7 +179,7 @@ class Game:
         Send position to server
         :return: None
         """
-        data = str(self.net.id) + ":" + str(self.player.x) + "," + str(self.player.y) + ',1'
+        data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
         reply = self.net.send(data)
         return reply
 

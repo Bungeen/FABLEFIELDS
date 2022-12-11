@@ -29,14 +29,15 @@ class Player(pygame.sprite.Sprite):
         self.image_left = sprite_sheet.get_image(2, 32, 32, 4.5, (0, 0, 0))
         self.image_right = sprite_sheet.get_image(1, 32, 32, 4.5, (0, 0, 0))
         self.image_behind = sprite_sheet.get_image(3, 32, 32, 4.5, (0, 0, 0))
-        size = max(int(pygame.display.get_surface().get_width() / (13 * 32)),
-                   int(pygame.display.get_surface().get_height() / (8 * 32)))
-        self.resize_initialization(size)
+        size = max(pygame.display.get_surface().get_width() / (13 * 32),
+                   pygame.display.get_surface().get_height() / (8 * 32))
+        self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
-        self.speed = 5
+        self.speed = 2 * size
         self.rect = self.image.get_rect()
         self.is_active = bool(active)
         self.coordinates = pygame.math.Vector2(0, 0)
+        self.old_size = size
 
     # NETWORKING BREAKING
     #     keys = pygame.key.get_pressed()
@@ -52,7 +53,7 @@ class Player(pygame.sprite.Sprite):
         elif self.direction.y == -1:
             self.image = self.image_behind
 
-    def resize_initialization(self, size):
+    def resize_initialization(self, size, fl=False):
         sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
         self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
@@ -60,6 +61,13 @@ class Player(pygame.sprite.Sprite):
         self.image_left = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
         self.image_right = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
         self.image_behind = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+        self.speed = 2 * size
+        if not fl:
+            print(self.rect)
+            #self.rect.x += (size - self.old_size) * 32
+            #self.rect.y += (size - self.old_size) * 32
+            print(self.rect)
+        self.old_size = size
 
     def move(self, dirn):
         """
@@ -128,11 +136,13 @@ class CameraGroup(pygame.sprite.Group):
 
 class Game:
 
-    def __init__(self, w, h, is_fullscreen=False):
+    def __init__(self, w, h):
         pygame.init()
+        print('NEW')
         self.width = w
         self.height = h
-        self.canvas = Canvas(self.width, self.height, is_fullscreen)
+        print(self.width, self.height)
+        self.canvas = Canvas(self.width, self.height)
         self.all_sprites = pygame.sprite.Group()
         self.camera_group = CameraGroup()
         self.net = Network()
@@ -147,38 +157,41 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
-                        print(self.canvas.is_fullscreen)
-                        self.canvas.is_fullscreen = not self.canvas.is_fullscreen
-                        self.canvas.initialization_screen()
-                        if self.canvas.is_fullscreen:
-                            infoObject = pygame.display.Info()
-                            size = max(infoObject.current_w / (13 * 32),
-                                       infoObject.current_h / (8 * 32))
-                        else:
-                            size = max(self.canvas.get_canvas().get_width() / (13 * 32),
-                                       self.canvas.get_canvas().get_height() / (8 * 32))
-                        print(size)
-                        self.player.resize_initialization(size)
+                        sys.exit()
+                        # print(self.canvas.is_fullscreen)
+                        # self.canvas.is_fullscreen = not self.canvas.is_fullscreen
+                        # self.canvas.initialization_screen()
+                        # if self.canvas.is_fullscreen:
+                        #     infoObject = pygame.display.Info()
+                        #     size = max(infoObject.current_w / (13 * 32),
+                        #                infoObject.current_h / (8 * 32))
+                        #     #print(size, min(1920 / (13 * 32),
+                        #     #           1080 / (8 * 32)))
+                        # else:
+                        #     size = max(self.canvas.get_canvas().get_width() / (13 * 32),
+                        #                self.canvas.get_canvas().get_height() / (8 * 32))
+                        # print(size)
+                        # self.player.resize_initialization(size)
                     if event.key == pygame.K_ESCAPE:
                         run = False
-                        m = Menu(self.canvas.width, self.canvas.height, self.canvas.is_fullscreen)
+                        m = Menu(self.canvas.width, self.canvas.height)
                         m.run()
                         return
-                if event.type == pygame.VIDEORESIZE:
-                    if not self.canvas.is_fullscreen:
-                        self.canvas.width = event.w
-                        self.canvas.height = event.h
-                        self.canvas.initialization_screen()
-                    if self.canvas.is_fullscreen:
-                        infoObject = pygame.display.Info()
-                        size = max(infoObject.current_w / (13 * 32),
-                                   infoObject.current_h / (8 * 32))
-                    else:
-                        size = max(self.canvas.get_canvas().get_width() / (13 * 32),
-                                   self.canvas.get_canvas().get_height() / (8 * 32))
-                    print(size)
-                    self.player.resize_initialization(size)
-                    # self.camera_group.resize_initialization(size)
+                # if event.type == pygame.VIDEORESIZE:
+                #     if not self.canvas.is_fullscreen:
+                #         self.canvas.width = event.w
+                #         self.canvas.height = event.h
+                #         self.canvas.initialization_screen()
+                #     if self.canvas.is_fullscreen:
+                #         infoObject = pygame.display.Info()
+                #         size = max(infoObject.current_w / (13 * 32),
+                #                    infoObject.current_h / (8 * 32))
+                #     else:
+                #         size = max(self.canvas.get_canvas().get_width() / (13 * 32),
+                #                    self.canvas.get_canvas().get_height() / (8 * 32))
+                #     print(size)
+                #     self.player.resize_initialization(size)
+                #     # self.camera_group.resize_initialization(size)
                 if event.type == pygame.QUIT:
                     run = False
                     sys.exit()
@@ -244,9 +257,10 @@ class Game:
 
 class Canvas(Menu):
 
-    def __init__(self, w, h, is_fullscreen=False, name="None"):
-        super().__init__(w, h, is_fullscreen)
-        self.initialization_screen()
+    def __init__(self, w, h):
+        super().__init__(w, h)
+        # self.initialization_screen()
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         print(self.width, self.height)
 
     @staticmethod

@@ -28,6 +28,7 @@ def threaded_client(conn, pl_id):
     currentId = "1"
     reply = ''
     while True:
+        print(123)
         try:
             data = conn.recv(2048)
             reply = data.decode('utf-8')

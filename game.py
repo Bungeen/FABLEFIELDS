@@ -64,8 +64,8 @@ class Player(pygame.sprite.Sprite):
         self.speed = 2 * size
         if not fl:
             print(self.rect)
-            #self.rect.x += (size - self.old_size) * 32
-            #self.rect.y += (size - self.old_size) * 32
+            # self.rect.x += (size - self.old_size) * 32
+            # self.rect.y += (size - self.old_size) * 32
             print(self.rect)
         self.old_size = size
 
@@ -136,16 +136,19 @@ class CameraGroup(pygame.sprite.Group):
 
 class Game:
 
-    def __init__(self, w, h):
+    def __init__(self, w, h, ip, port):
         pygame.init()
-        print('NEW')
         self.width = w
         self.height = h
         print(self.width, self.height)
         self.canvas = Canvas(self.width, self.height)
         self.all_sprites = pygame.sprite.Group()
         self.camera_group = CameraGroup()
-        self.net = Network()
+        try:
+            self.net = Network(ip, port)
+        except:
+            m = Menu(w, h)
+            m.run()
         self.player = Player(self.camera_group, (200, 200), active=1)
         self.player2 = Player(self.camera_group, (200, 200), active=0)
 

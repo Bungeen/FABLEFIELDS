@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 import pygame
 
@@ -144,59 +145,46 @@ class Game:
         self.canvas = Canvas(self.width, self.height)
         self.all_sprites = pygame.sprite.Group()
         self.camera_group = CameraGroup()
+        self.is_running = True
         try:
             self.net = Network(ip, port)
+            if self.net.id == '0XE000':
+                self.is_running = False
+                m = Menu(w, h)
+                m.run()
+                return
+            data = '123'
+            print(data)
+            df = self.net.send(data)
+            if df == '0XE000':
+                print(1)
+                self.is_running = False
+                m = Menu(w, h)
+                m.run()
+                return
         except:
+            self.is_running = False
             m = Menu(w, h)
             m.run()
+            return
         self.player = Player(self.camera_group, (200, 200), active=1)
         self.player2 = Player(self.camera_group, (200, 200), active=0)
 
     def run(self):
         clock = pygame.time.Clock()
-        run = True
-        while run:
+        while self.is_running:
             clock.tick(60)
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         sys.exit()
-                        # print(self.canvas.is_fullscreen)
-                        # self.canvas.is_fullscreen = not self.canvas.is_fullscreen
-                        # self.canvas.initialization_screen()
-                        # if self.canvas.is_fullscreen:
-                        #     infoObject = pygame.display.Info()
-                        #     size = max(infoObject.current_w / (13 * 32),
-                        #                infoObject.current_h / (8 * 32))
-                        #     #print(size, min(1920 / (13 * 32),
-                        #     #           1080 / (8 * 32)))
-                        # else:
-                        #     size = max(self.canvas.get_canvas().get_width() / (13 * 32),
-                        #                self.canvas.get_canvas().get_height() / (8 * 32))
-                        # print(size)
-                        # self.player.resize_initialization(size)
                     if event.key == pygame.K_ESCAPE:
-                        run = False
+                        self.is_running = False
                         m = Menu(self.canvas.width, self.canvas.height)
                         m.run()
                         return
-                # if event.type == pygame.VIDEORESIZE:
-                #     if not self.canvas.is_fullscreen:
-                #         self.canvas.width = event.w
-                #         self.canvas.height = event.h
-                #         self.canvas.initialization_screen()
-                #     if self.canvas.is_fullscreen:
-                #         infoObject = pygame.display.Info()
-                #         size = max(infoObject.current_w / (13 * 32),
-                #                    infoObject.current_h / (8 * 32))
-                #     else:
-                #         size = max(self.canvas.get_canvas().get_width() / (13 * 32),
-                #                    self.canvas.get_canvas().get_height() / (8 * 32))
-                #     print(size)
-                #     self.player.resize_initialization(size)
-                #     # self.camera_group.resize_initialization(size)
                 if event.type == pygame.QUIT:
-                    run = False
+                    self.is_running = False
                     sys.exit()
 
             keys = pygame.key.get_pressed()
@@ -247,6 +235,12 @@ class Game:
         """
         data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
         reply = self.net.send(data)
+        print(reply, "SEND_DATA_GAME")
+        if reply == '0XE000':
+            self.is_running = False
+            m = Menu(self.canvas.width, self.canvas.height)
+            m.run()
+            return
         return reply
 
     @staticmethod

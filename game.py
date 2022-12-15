@@ -36,6 +36,11 @@ class Player(pygame.sprite.Sprite):
         self.direction = pygame.math.Vector2()
         self.speed = 2 * size
         self.rect = self.image.get_rect()
+        print(pos[0], pos[1])
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+        print(pygame.display.get_surface().get_width(), pygame.display.get_surface().get_height())
+        print(self.rect.x, self.rect.y)
         self.is_active = bool(active)
         self.coordinates = pygame.math.Vector2(0, 0)
         self.old_size = size
@@ -153,7 +158,7 @@ class Game:
                 m = Menu(w, h)
                 m.run()
                 return
-            data = '123'
+            data = 'user'
             print(data)
             df = self.net.send(data)
             if df == '0XE000':
@@ -167,8 +172,12 @@ class Game:
             m = Menu(w, h)
             m.run()
             return
-        self.player = Player(self.camera_group, (200, 200), active=1)
-        self.player2 = Player(self.camera_group, (200, 200), active=0)
+
+        # Take information about self
+        data = list(map(int, self.net.send('KEY')[2:].split(',')))
+        self.player = Player(self.camera_group, (data[0], data[1]), active=data[2])
+        print((data[0] - 100, data[1] - 100))
+        self.player2 = Player(self.camera_group, (data[0] - 100, data[1] - 100), active=0)
 
     def run(self):
         clock = pygame.time.Clock()

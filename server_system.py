@@ -26,7 +26,7 @@ class Server:
 
         self.id_using_list = {}
         self.id_available_list = ['S0', 'S1', 'S1', 'S1']
-        self.pos = ["0:50,50,0", "1:100,100,0"]
+        self.pos = ["0:50,50,0", "1:1114,1187,0"]
 
     def threaded_client(self, conn, player_id):
         # currentId = "2"  # NOT 1 OR 0. IT CAN'T BE ENCODED
@@ -38,6 +38,8 @@ class Server:
         try:
             current_name_not_decoded = conn.recv(2048)
         except:
+            self.id_available_list += [player_id]
+            self.id_available_list.sort()
             print('Timeout')
             conn.close()
             return
@@ -50,6 +52,26 @@ class Server:
         self.id_using_list[current_name] = player_id
         print(player_id)
         conn.sendall(str.encode('GOOD'))
+        print(current_name, self.registered_players, self.registered_players.keys())
+
+        # Checking for information about player
+        if current_name in self.registered_players.keys():
+            self.pos[int(player_id[1])] = f"{int(player_id[1])}:{self.registered_players[current_name]},0"
+        print(self.pos)
+
+        # Give client information about self
+        try:
+            key = conn.recv(2048)
+            key = key.decode('utf-8')
+            conn.sendall(str.encode(self.pos[int(player_id[1])]))
+        except:
+            self.id_available_list += [player_id]
+            self.id_available_list.sort()
+            del self.id_using_list[current_name]
+            print('Timeout')
+            conn.close()
+            return
+
         while True:
             try:
                 data = conn.recv(2048)
@@ -83,6 +105,7 @@ class Server:
         print(self.pos)
         print("Connection Closed")
         self.id_available_list += [player_id]
+        self.id_available_list.sort()
         del self.id_using_list[current_name]
         print(self.id_available_list, self.id_using_list)
 
@@ -104,5 +127,5 @@ class Server:
             start_new_thread(self.threaded_client, (conn, current_id))
 
 
-tmp = Server(['user'])
+tmp = Server({'user': "1214,1287", 'tmp_1': "300, 350"})
 tmp.run()

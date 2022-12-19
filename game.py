@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import json
+import ast
 
 import pygame
 
@@ -143,6 +145,7 @@ class CameraGroup(pygame.sprite.Group):
 class Game:
 
     def __init__(self, w, h, ip, port):
+        self.base_id = ["S0", "S1", "S2", "S3"]
         pygame.init()
         self.width = w
         self.height = h
@@ -174,10 +177,18 @@ class Game:
             return
 
         # Take information about self
-        data = list(map(int, self.net.send('KEY')[2:].split(',')))
-        self.player = Player(self.camera_group, (data[0], data[1]), active=data[2])
-        print((data[0] - 100, data[1] - 100))
-        self.player2 = Player(self.camera_group, (data[0] - 100, data[1] - 100), active=0)
+        data = self.net.send('KEY')
+        if data == '0XE000':
+            self.is_running = False
+            m = Menu(w, h)
+            m.run()
+            return
+        self.player = Player(self.camera_group, data['Player Position'], active=data['Player Active'])
+        # print((data[0] - 100, data[1] - 100))
+        self.player2 = Player(self.camera_group, (100, 100), active=0)
+        self.player3 = Player(self.camera_group, (100, 100), active=0)
+        self.player4 = Player(self.camera_group, (100, 100), active=0)
+        self.base_id.remove(self.net.id)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -219,7 +230,18 @@ class Game:
             self.player.change_view()
 
             # Send Network Stuff
-            self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data(self.send_data())
+            # self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data()
+
+            # Players synh
+            data = self.send_data()
+            for key in data.keys():
+                if key == self.base_id[0]:
+                    self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data(data[key])
+                if key == self.base_id[1]:
+                    self.player3.rect.x, self.player3.rect.y, self.player3.is_active = self.parse_data(data[key])
+                if key == self.base_id[2]:
+                    self.player4.rect.x, self.player4.rect.y, self.player4.is_active = self.parse_data(data[key])
+
 
             # Update Canvas
             self.canvas.draw_background()
@@ -242,7 +264,9 @@ class Game:
         Send position to server
         :return: None
         """
-        data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
+        data = {'ID': self.net.id, 'Player Position': (self.player.rect.x, self.player.rect.y), 'Player Active': 1}
+        # data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
+        print(data)
         reply = self.net.send(data)
         print(reply, "SEND_DATA_GAME")
         if reply == '0XE000':
@@ -255,7 +279,8 @@ class Game:
     @staticmethod
     def parse_data(data):
         try:
-            d = data.split(":")[1].split(",")
+            d = [data['Player Position'][0], data['Player Position'][1], data['Player Active']]
+            print(int(d[0]), int(d[1]), bool(int(d[2])))
             return int(d[0]), int(d[1]), bool(int(d[2]))
         except:
             return 0, 0, 0

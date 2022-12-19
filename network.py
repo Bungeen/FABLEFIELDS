@@ -1,5 +1,8 @@
 import socket
 
+import json
+import ast
+
 
 class Network:
 
@@ -32,19 +35,22 @@ class Network:
         :param data: str
         :return: str
         """
-
+        packed_data = json.dumps(data)
         try:
             try:
-                self.client.send(str.encode(data))
+                self.client.send(bytes(packed_data, encoding="utf-8"))
+                print('Continued', data)
             except:
-                print('FAILED SENDING NETWORK')
+                print('FAILED SENDING NETWORK', 'First')
                 return '0XE000'
             try:
-                reply = self.client.recv(2048).decode()
+                reply = self.client.recv(2048).decode("utf-8")
+                print(reply)
+                reply_data = json.loads(reply)
             except:
                 print('FAILED GETTING NETWORK')
                 return '0XE000'
-            print(reply)
-            return reply
+            print(reply_data)
+            return reply_data
         except socket.error as e:
             return str(e)

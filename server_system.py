@@ -28,9 +28,12 @@ class Server:
 
         self.id_using_list = {}
         self.id_available_list = ['S0', 'S1', 'S2', 'S3']
+        self.logins_using_list = []
         # self.pos = ["0:50,50,0", "1:1114,1187,0"]
-        self.pos = {'S0': {'Player Position': (50, 50), 'Player Active': 0},
-                    'S1': {'Player Position': (1114, 1187), 'Player Active': 0}}
+        self.pos = {'S0': {'Player Position': (0, 0), 'Player Status': 0},
+                    'S1': {'Player Position': (0, 0), 'Player Status': 0},
+                    'S2': {'Player Position': (0, 0), 'Player Status': 0},
+                    'S3': {'Player Position': (0, 0), 'Player Status': 0}}
 
     def threaded_client(self, conn, player_id):
         # currentId = "2"  # NOT 1 OR 0. IT CAN'T BE ENCODED
@@ -53,9 +56,18 @@ class Server:
         current_name = json.loads(current_name_tmp)  # json.load(current_name_tmp)
         print(f'{current_name} was got')
 
+        # Check login
+        if current_name in self.logins_using_list:
+            self.id_available_list += [player_id]
+            self.id_available_list.sort()
+            print("Somebody with same login are online")
+            conn.close()
+            return
+
         print('Save information about session...')
         print(self.id_available_list[0])
         self.id_using_list[player_id] = current_name
+        self.logins_using_list += [current_name]
         print(player_id)
         conn.send(bytes(json.dumps("GOOD"), encoding="utf-8"))
         print('SENDED')
@@ -69,7 +81,8 @@ class Server:
                 except:
                     print(player_id, key, current_name)
                     sys.exit()
-            # self.pos[int(player_id[1])] = f"{int(player_id[1])}:{self.registered_players[current_name]},0"
+        # self.pos[player_id]['Status'] = 1
+        # self.pos[int(player_id[1])] = f"{int(player_id[1])}:{self.registered_players[current_name]},0"
         print(self.pos)
 
         # Give client information about self
@@ -84,6 +97,7 @@ class Server:
             self.id_available_list += [player_id]
             self.id_available_list.sort()
             del self.id_using_list[player_id]
+            self.logins_using_list.remove(current_name)
             print('Timeout')
             conn.close()
             return
@@ -103,14 +117,14 @@ class Server:
                     print("Sending Data", sending_data)
                     cur_key = reply["ID"]
                     print(self.id_using_list, 'IS_USING')
-                    for key in self.id_using_list.keys():
+                    for key in self.pos.keys():
                         print(key)
                         if key == cur_key:
                             continue
                         sending_data[key] = self.pos[key]
                     print("Cur key", cur_key)
                     self.pos[cur_key] = {"Player Position": reply["Player Position"],
-                                         "Player Active": reply["Player Active"]}
+                                         "Player Status": reply["Player Status"]}
                     # arr = reply.split(":")  # Full decode data
                     # print(arr, 'arr')
                     # id = int(arr[0][1:])  # id sender
@@ -133,10 +147,14 @@ class Server:
         # self.pos[player_id] = self.pos[player_id][:-1] + '0'
         print(self.pos)
         print("Connection Closed")
+        self.registered_players[current_name] = self.pos[player_id]
+        self.pos[player_id]['Player Status'] = 0
+        print(self.pos)
         self.id_available_list += [player_id]
         self.id_available_list.sort()
         del self.id_using_list[player_id]
-        print(self.id_available_list, self.id_using_list)
+        self.logins_using_list.remove(current_name)
+        print(self.id_available_list, self.id_using_list, self.logins_using_list)
 
     def run(self):
         while True:
@@ -156,5 +174,6 @@ class Server:
             start_new_thread(self.threaded_client, (conn, current_id))
 
 
-tmp = Server({'user': {'Player Position': (1214, 1287)}, 'tmp_1': {'Player Position': (800, 700)}})
+tmp = Server({'user': {'Player Position': (1214, 1287), 'Player Status': 1},
+              'tmp_1': {'Player Position': (800, 700), 'Player Status': 1}})
 tmp.run()

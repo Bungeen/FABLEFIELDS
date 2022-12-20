@@ -23,17 +23,21 @@ def load_image(name, colorkey=None):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, group, pos, player_id=0, active=0):
+    def __init__(self, group, pos, player_id=0, status=0):
         super().__init__(group)
-        sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
+        sprite_sheet_image = pygame.image.load('assets/JessyWithNull.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
         self.image = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
-        self.image_top = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
-        self.image_left = sprite_sheet.get_image(2, 32, 32, 4.5, (0, 0, 0))
-        self.image_right = sprite_sheet.get_image(1, 32, 32, 4.5, (0, 0, 0))
-        self.image_behind = sprite_sheet.get_image(3, 32, 32, 4.5, (0, 0, 0))
+        self.image_top = sprite_sheet.get_image(1, 32, 32, 4.5, (0, 0, 0))
+        self.image_left = sprite_sheet.get_image(3, 32, 32, 4.5, (0, 0, 0))
+        self.image_right = sprite_sheet.get_image(2, 32, 32, 4.5, (0, 0, 0))
+        self.image_behind = sprite_sheet.get_image(4, 32, 32, 4.5, (0, 0, 0))
+        self.image_nothing = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
         size = max(pygame.display.get_surface().get_width() / (13 * 32),
                    pygame.display.get_surface().get_height() / (8 * 32))
+
+        self.status = status
+
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
         self.speed = 2 * size
@@ -43,7 +47,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = pos[1]
         print(pygame.display.get_surface().get_width(), pygame.display.get_surface().get_height())
         print(self.rect.x, self.rect.y)
-        self.is_active = bool(active)
         self.coordinates = pygame.math.Vector2(0, 0)
         self.old_size = size
 
@@ -52,23 +55,40 @@ class Player(pygame.sprite.Sprite):
     #     # NETWORKING BREAKING
 
     def change_view(self):
+        if self.status == 0:
+            self.image = self.image_nothing
+            return
         if self.direction.x == -1:
             self.image = self.image_left
+            self.status = 1
         elif self.direction.x == 1:
             self.image = self.image_right
+            self.status = 2
         elif self.direction.y == 1:
             self.image = self.image_top
+            self.status = 3
         elif self.direction.y == -1:
             self.image = self.image_behind
+            self.status = 4
+        elif self.status != 0:
+            if self.status == 1:
+                self.image = self.image_left
+            elif self.status == 2:
+                self.image = self.image_right
+            elif self.status == 3:
+                self.image = self.image_top
+            elif self.status == 4:
+                self.image = self.image_behind
 
     def resize_initialization(self, size, fl=False):
-        sprite_sheet_image = pygame.image.load('assets/jessy.png').convert_alpha()
+        sprite_sheet_image = pygame.image.load('assets/JessyWithNull.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
         self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
-        self.image_top = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
-        self.image_left = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
-        self.image_right = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
-        self.image_behind = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+        self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
+        self.image_left = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+        self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
+        self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
+        self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
         self.speed = 2 * size
         if not fl:
             print(self.rect)
@@ -76,6 +96,10 @@ class Player(pygame.sprite.Sprite):
             # self.rect.y += (size - self.old_size) * 32
             print(self.rect)
         self.old_size = size
+        if self.status == 0:
+            self.image = self.image_nothing
+            return
+        self.image = self.image_top
 
     def move(self, dirn):
         """
@@ -160,7 +184,7 @@ class Game:
                 self.is_running = False
                 m = Menu(w, h)
                 m.run()
-                return
+                os._exit(1)
             data = 'user'
             print(data)
             df = self.net.send(data)
@@ -169,12 +193,12 @@ class Game:
                 self.is_running = False
                 m = Menu(w, h)
                 m.run()
-                return
+                os._exit(1)
         except:
             self.is_running = False
             m = Menu(w, h)
             m.run()
-            return
+            os._exit(1)
 
         # Take information about self
         data = self.net.send('KEY')
@@ -182,12 +206,12 @@ class Game:
             self.is_running = False
             m = Menu(w, h)
             m.run()
-            return
-        self.player = Player(self.camera_group, data['Player Position'], active=data['Player Active'])
+            sys.exit()
+        self.player = Player(self.camera_group, data['Player Position'], status=1)
         # print((data[0] - 100, data[1] - 100))
-        self.player2 = Player(self.camera_group, (100, 100), active=0)
-        self.player3 = Player(self.camera_group, (100, 100), active=0)
-        self.player4 = Player(self.camera_group, (100, 100), active=0)
+        self.player2 = Player(self.camera_group, (100, 100), status=0)
+        self.player3 = Player(self.camera_group, (100, 100), status=0)
+        self.player4 = Player(self.camera_group, (100, 100), status=0)
         self.base_id.remove(self.net.id)
 
     def run(self):
@@ -202,10 +226,11 @@ class Game:
                         self.is_running = False
                         m = Menu(self.canvas.width, self.canvas.height)
                         m.run()
-                        return
+                        sys.exit()
                 if event.type == pygame.QUIT:
                     self.is_running = False
-                    sys.exit()
+                    print('EXIT')
+                    os._exit(1)
 
             keys = pygame.key.get_pressed()
 
@@ -236,12 +261,15 @@ class Game:
             data = self.send_data()
             for key in data.keys():
                 if key == self.base_id[0]:
-                    self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data(data[key])
+                    self.player2.rect.x, self.player2.rect.y, self.player2.status = self.parse_data(data[key])
                 if key == self.base_id[1]:
-                    self.player3.rect.x, self.player3.rect.y, self.player3.is_active = self.parse_data(data[key])
+                    self.player3.rect.x, self.player3.rect.y, self.player3.status = self.parse_data(data[key])
                 if key == self.base_id[2]:
-                    self.player4.rect.x, self.player4.rect.y, self.player4.is_active = self.parse_data(data[key])
+                    self.player4.rect.x, self.player4.rect.y, self.player4.status = self.parse_data(data[key])
 
+            self.player2.change_view()
+            self.player3.change_view()
+            self.player4.change_view()
 
             # Update Canvas
             self.canvas.draw_background()
@@ -264,24 +292,25 @@ class Game:
         Send position to server
         :return: None
         """
-        data = {'ID': self.net.id, 'Player Position': (self.player.rect.x, self.player.rect.y), 'Player Active': 1}
+        data = {'ID': self.net.id, 'Player Position': (self.player.rect.x, self.player.rect.y),
+                'Player Status': self.player.status}
         # data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
-        print(data)
+        # print(data)
         reply = self.net.send(data)
-        print(reply, "SEND_DATA_GAME")
+        print(reply, "GET_DATA_GAME")
         if reply == '0XE000':
             self.is_running = False
             m = Menu(self.canvas.width, self.canvas.height)
             m.run()
-            return
+            sys.exit()
         return reply
 
     @staticmethod
     def parse_data(data):
         try:
-            d = [data['Player Position'][0], data['Player Position'][1], data['Player Active']]
-            print(int(d[0]), int(d[1]), bool(int(d[2])))
-            return int(d[0]), int(d[1]), bool(int(d[2]))
+            d = [data['Player Position'][0], data['Player Position'][1], data['Player Status']]
+            # print(int(d[0]), int(d[1]), bool(int(d[2])))
+            return int(d[0]), int(d[1]), int(d[2])
         except:
             return 0, 0, 0
 

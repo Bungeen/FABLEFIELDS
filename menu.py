@@ -1,3 +1,5 @@
+import os
+
 import pygame
 import sys
 
@@ -42,13 +44,16 @@ class Menu:
                     if tmp == 'multiplayer':
                         m = connection_menu.Connection_Menu(self.width, self.height)
                         m.run()
+                        self.is_running = False
+                        sys.exit()
                         # g = game.Game(self.width, self.height)
                         # g.run()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
-                        sys.exit()
+                        os._exit(1)
                 if event.type == pygame.QUIT:
                     self.is_running = False
+                    os._exit(1)
             self.group.update(self.screen)
             pygame.display.update()
 

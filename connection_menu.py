@@ -1,3 +1,5 @@
+import os
+
 import pygame
 import sys
 
@@ -48,8 +50,10 @@ class Connection_Menu:
                     if event.key == pygame.K_RETURN:
                         g = game.Game(self.width, self.height, '192.168.1.44', 5555)
                         g.run()
+                        os._exit(1)
                         # print(123)
                 if event.type == pygame.QUIT:
+                    os._exit(1)
                     self.is_running = False
             # self.group.update(self.screen)
             pygame.display.update()

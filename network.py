@@ -39,18 +39,18 @@ class Network:
         try:
             try:
                 self.client.send(bytes(packed_data, encoding="utf-8"))
-                print('Continued', data)
+                # print('Continued', data)
             except:
                 print('FAILED SENDING NETWORK', 'First')
                 return '0XE000'
             try:
                 reply = self.client.recv(2048).decode("utf-8")
-                print(reply)
+                # print(reply)
                 reply_data = json.loads(reply)
             except:
                 print('FAILED GETTING NETWORK')
                 return '0XE000'
-            print(reply_data)
+            # print(reply_data)
             return reply_data
         except socket.error as e:
             return str(e)

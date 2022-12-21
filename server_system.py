@@ -92,6 +92,7 @@ class Server:
         # self.pos[int(player_id[1])] = f"{int(player_id[1])}:{self.registered_players[current_name]},0"
         print(self.pos)
         tmp_current_data = self.pos
+        print(tmp_current_data)
         tmp_current_data[player_id]['Package']['Map'] = TEST_MAP
         # Give client information about self
         try:
@@ -132,7 +133,7 @@ class Server:
                         sending_data[key] = self.pos[key]
                     print("Cur key", cur_key)
                     self.pos[cur_key] = {"Player Position": reply["Player Position"],
-                                         "Player Status": reply["Player Status"]}
+                                         "Player Status": reply["Player Status"], 'Package': {}}
                     # arr = reply.split(":")  # Full decode data
                     # print(arr, 'arr')
                     # id = int(arr[0][1:])  # id sender

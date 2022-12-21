@@ -51,6 +51,8 @@ class Player(pygame.sprite.Sprite):
         self.coordinates = pygame.math.Vector2(0, 0)
         self.old_size = size
 
+        self.using_tile = (-100000, -100000)
+
     # NETWORKING BREAKING
     #     keys = pygame.key.get_pressed()
     #     # NETWORKING BREAKING
@@ -209,6 +211,29 @@ class CameraGroup(pygame.sprite.Group):
         # ground_offset = self.ground_rect.topleft - self.offset
         # self.display_surface.blit(self.ground_surf, ground_offset)
 
+
+        if player.status == 1:
+            selected_rect = (((player.rect.center[0]) // self.tile_size - 1) * self.tile_size,
+                             (player.rect.center[
+                                  1]) // self.tile_size * self.tile_size) - self.offset
+        elif player.status == 2:
+            selected_rect = (((player.rect.center[0]) // self.tile_size + 1) * self.tile_size,
+                             (player.rect.center[
+                                  1]) // self.tile_size * self.tile_size) - self.offset
+        elif player.status == 3:
+            selected_rect = (((player.rect.center[0]) // self.tile_size) * self.tile_size,
+                             ((player.rect.center[
+                                 1]) // self.tile_size + 1) * self.tile_size) - self.offset
+        elif player.status == 4:
+            selected_rect = (((player.rect.center[0]) // self.tile_size) * self.tile_size,
+                             ((player.rect.center[
+                                 1]) // self.tile_size - 1) * self.tile_size) - self.offset
+        else:
+            selected_rect = (-100000, -100000)
+        image_selected = pygame.transform.scale(pygame.image.load('assets/Selected.png'),
+                                                (self.tile_size, self.tile_size))
+        self.display_surface.blit(image_selected, selected_rect)
+
         # active elements
         for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
             sprite_offset = sprite.rect.topleft - self.offset
@@ -216,12 +241,14 @@ class CameraGroup(pygame.sprite.Group):
 
 
 class Game:
-
     def __init__(self, w, h, ip, port):
         self.base_id = ["S0", "S1", "S2", "S3"]
         pygame.init()
         self.width = w
         self.height = h
+        size = max(pygame.display.get_surface().get_width() / (13 * 32),
+                   pygame.display.get_surface().get_height() / (8 * 32))
+        self.tile_size = int(size * 32)
         print(self.width, self.height)
         self.canvas = Canvas(self.width, self.height)
         self.all_sprites = pygame.sprite.Group()
@@ -264,6 +291,7 @@ class Game:
         self.player4 = Player(self.camera_group, (100, 100), status=0)
         self.base_id.remove(self.net.id)
         self.camera_group.map = self.map
+
     # def render(self, screen):
     #     for y in range(20):
     #         for x in range(30):

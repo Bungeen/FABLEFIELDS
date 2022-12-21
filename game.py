@@ -5,6 +5,7 @@ import json
 import ast
 
 import pygame
+import pytmx
 
 import spritesheet
 
@@ -129,23 +130,50 @@ class CameraGroup(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
         self.display_surface = pygame.display.get_surface()
-        self.ground_surf = pygame.image.load("graphics/ground.png").convert()
+        # self.ground_surf = pygame.image.load("graphics/ground.png").convert()
         # size = max(int(pygame.display.get_surface().get_width() / (13 * 32)),
         #            int(pygame.display.get_surface().get_height() / (8 * 32)))
         # self.ground_surf = pygame.transform.scale(self.ground_surf, (
         # self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
-        self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
+        # self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
         # Offset
         self.offset = pygame.math.Vector2()
         self.half_width = self.display_surface.get_size()[0] // 2
         self.half_height = self.display_surface.get_size()[1] // 2
+        self.map = []
+        size = max(pygame.display.get_surface().get_width() / (13 * 32),
+                   pygame.display.get_surface().get_height() / (8 * 32))
+        self.tile_size = int(size * 32)
+        self.tiled_base = {'1': pygame.transform.scale(pygame.image.load("assets/test_grass_1.png").convert_alpha(),
+                                                       (self.tile_size, self.tile_size)),
+                           '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
+                                                       (self.tile_size, self.tile_size))}
+        with open("maps/mapp.txt", 'r', encoding='utf8') as f:
+            base = f.read().split('\n')
+            for el in base:
+                self.map += [el.split(', ')]
+            f.close()
+        # print(sys.getsizeof(self.map))
+        # print(self.map)
+        # os._exit(1)
 
-    def resize_initialization(self, size):
-        self.ground_surf = pygame.image.load("graphics/ground.png").convert()
-        self.ground_surf = pygame.transform.scale(self.ground_surf, (
-            self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
-        self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
+        # self.map = pytmx.load_pygame("maps\mappp.tmx")
+        # size = max(pygame.display.get_surface().get_width() / (13 * 32),
+        #            pygame.display.get_surface().get_height() / (8 * 32))
+        # for y in range(20):
+        #     for x in range(30):
+        #         image = pygame.transform.scale(self.map.get_tile_image(x, y, 0), (size * 32, size * 32))
+        #         self.map.set_tile_properties(x, y, image)
+        # for tile_object in self.map.tmxdata.objects:
+        #     tile_object.x *= int(400 / self.map.tilesize)
+        #     tile_object.y *= int(400 / self.map.tilesize)
+
+    # def resize_initialization(self, size):
+    # self.ground_surf = pygame.image.load("graphics/ground.png").convert()
+    # self.ground_surf = pygame.transform.scale(self.ground_surf, (
+    #    self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
+    # self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
     def center_target_camera(self, target):
         self.offset.x = target.rect.centerx - self.half_width
@@ -156,9 +184,27 @@ class CameraGroup(pygame.sprite.Group):
         self.half_height = self.display_surface.get_size()[1] // 2
         self.center_target_camera(player)
 
+        # size = max(pygame.display.get_surface().get_width() / (13 * 32),
+        #            pygame.display.get_surface().get_height() / (8 * 32))
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                tile = self.map[y][x]
+                id_tile, id_state = map(str, tile.split(' - '))
+                # print(id_tile)
+                ground_offset = (x * self.tile_size - self.offset[0], y * self.tile_size - self.offset[1])
+                self.display_surface.blit(self.tiled_base[id_tile], ground_offset)
+
+        # for y in range(20):
+        #     for x in range(30):
+        #         image = pygame.transform.scale(self.map.get_tile_image(x, y, 0), (size * 32, size * 32))
+        #         ground_offset = (x * self.map.tilewidth - self.offset[0], y * self.map.tilewidth - self.offset[1])
+        #         # ground_offset = (x * size * 8, y * size * 8)
+        #         # print(ground_offset)
+        #         self.display_surface.blit(image, ground_offset) # (, y * size)
+
         # ground
-        ground_offset = self.ground_rect.topleft - self.offset
-        self.display_surface.blit(self.ground_surf, ground_offset)
+        # ground_offset = self.ground_rect.topleft - self.offset
+        # self.display_surface.blit(self.ground_surf, ground_offset)
 
         # active elements
         for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
@@ -185,7 +231,7 @@ class Game:
                 m = Menu(w, h)
                 m.run()
                 os._exit(1)
-            data = 'user'
+            data = 'tmp_1'
             print(data)
             df = self.net.send(data)
             if df == '0XE000':
@@ -213,6 +259,14 @@ class Game:
         self.player3 = Player(self.camera_group, (100, 100), status=0)
         self.player4 = Player(self.camera_group, (100, 100), status=0)
         self.base_id.remove(self.net.id)
+
+    # def render(self, screen):
+    #     for y in range(20):
+    #         for x in range(30):
+    #             image = self.map.get_tile_image(x, y, 0)
+    #             size = max(pygame.display.get_surface().get_width() / (13 * 32),
+    #                        pygame.display.get_surface().get_height() / (8 * 32))
+    #             screen.blit(image, (x * size, y * size))
 
     def run(self):
         clock = pygame.time.Clock()
@@ -281,6 +335,7 @@ class Game:
             #     self.player2.draw(self.canvas.get_canvas())
             # self.all_sprites.draw(self.canvas.get_canvas())
             # self.canvas.update()
+            # self.render(self.canvas.get_canvas())
             self.camera_group.update()
             self.camera_group.custom_draw(self.player)
             self.canvas.update()

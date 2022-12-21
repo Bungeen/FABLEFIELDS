@@ -6,6 +6,13 @@ import ast
 import time
 import json
 
+TEST_MAP = [['1 - 0', '1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '2 - 0'],
+            ['1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '1 - 0'],
+            ['2 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '1 - 0', '1 - 0', '1 - 0'],
+            ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0'],
+            ['2 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '1 - 0'],
+            ['2 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '1 - 0']]
+
 
 class Server:
     def __init__(self, registered_players):
@@ -30,10 +37,10 @@ class Server:
         self.id_available_list = ['S0', 'S1', 'S2', 'S3']
         self.logins_using_list = []
         # self.pos = ["0:50,50,0", "1:1114,1187,0"]
-        self.pos = {'S0': {'Player Position': (0, 0), 'Player Status': 0},
-                    'S1': {'Player Position': (0, 0), 'Player Status': 0},
-                    'S2': {'Player Position': (0, 0), 'Player Status': 0},
-                    'S3': {'Player Position': (0, 0), 'Player Status': 0}}
+        self.pos = {'S0': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}},
+                    'S1': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}},
+                    'S2': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}},
+                    'S3': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}}}
 
     def threaded_client(self, conn, player_id):
         # currentId = "2"  # NOT 1 OR 0. IT CAN'T BE ENCODED
@@ -84,13 +91,14 @@ class Server:
         # self.pos[player_id]['Status'] = 1
         # self.pos[int(player_id[1])] = f"{int(player_id[1])}:{self.registered_players[current_name]},0"
         print(self.pos)
-
+        tmp_current_data = self.pos
+        tmp_current_data[player_id]['Package']['Map'] = TEST_MAP
         # Give client information about self
         try:
             key = conn.recv(2048)
             key = key.decode('utf-8')
             print(key)
-            packed_data = json.dumps(self.pos[player_id])
+            packed_data = json.dumps(tmp_current_data[player_id])
 
             conn.sendall(bytes(packed_data, encoding="utf-8"))
         except:
@@ -174,6 +182,6 @@ class Server:
             start_new_thread(self.threaded_client, (conn, current_id))
 
 
-tmp = Server({'user': {'Player Position': (1214, 1287), 'Player Status': 1},
-              'tmp_1': {'Player Position': (800, 700), 'Player Status': 1}})
+tmp = Server({'user': {'Player Position': (1214, 1287), 'Player Status': 1, 'Package': {}},
+              'tmp_1': {'Player Position': (800, 700), 'Player Status': 1, 'Package': {}}})
 tmp.run()

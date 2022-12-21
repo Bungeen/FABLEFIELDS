@@ -149,14 +149,17 @@ class CameraGroup(pygame.sprite.Group):
                                                        (self.tile_size, self.tile_size)),
                            '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
                                                        (self.tile_size, self.tile_size))}
-        with open("maps/mapp.txt", 'r', encoding='utf8') as f:
-            base = f.read().split('\n')
-            for el in base:
-                self.map += [el.split(', ')]
-            f.close()
+
+        # IMPORTANT. LOADING SAVE #################################
+        # with open("maps/mapp.txt", 'r', encoding='utf8') as f:
+        #     base = f.read().split('\n')
+        #     for el in base:
+        #         self.map += [el.split(', ')]
+        #     f.close()
         # print(sys.getsizeof(self.map))
         # print(self.map)
         # os._exit(1)
+        ###########################################################
 
         # self.map = pytmx.load_pygame("maps\mappp.tmx")
         # size = max(pygame.display.get_surface().get_width() / (13 * 32),
@@ -254,12 +257,13 @@ class Game:
             m.run()
             sys.exit()
         self.player = Player(self.camera_group, data['Player Position'], status=1)
+        self.map = data['Package']['Map']
         # print((data[0] - 100, data[1] - 100))
         self.player2 = Player(self.camera_group, (100, 100), status=0)
         self.player3 = Player(self.camera_group, (100, 100), status=0)
         self.player4 = Player(self.camera_group, (100, 100), status=0)
         self.base_id.remove(self.net.id)
-
+        self.camera_group.map = self.map
     # def render(self, screen):
     #     for y in range(20):
     #         for x in range(30):

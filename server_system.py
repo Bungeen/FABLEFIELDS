@@ -37,10 +37,15 @@ class Server:
         self.id_available_list = ['S0', 'S1', 'S2', 'S3']
         self.logins_using_list = []
         # self.pos = ["0:50,50,0", "1:1114,1187,0"]
-        self.pos = {'S0': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}},
-                    'S1': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}},
-                    'S2': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}},
-                    'S3': {'Player Position': (0, 0), 'Player Status': 0, 'Package': {}}}
+        self.pos = {
+            'S0': {'Player Position': (0, 0), 'Player Status': 0, 'Player Animation Type': 0, 'Player Using State': 0,
+                   'Package': {'World change': []}},
+            'S1': {'Player Position': (0, 0), 'Player Status': 0, 'Player Animation Type': 0, 'Player Using State': 0,
+                   'Package': {'World change': []}},
+            'S2': {'Player Position': (0, 0), 'Player Status': 0, 'Player Animation Type': 0, 'Player Using State': 0,
+                   'Package': {'World change': []}},
+            'S3': {'Player Position': (0, 0), 'Player Status': 0, 'Player Animation Type': 0, 'Player Using State': 0,
+                   'Package': {'World change': []}}}
 
     def threaded_client(self, conn, player_id):
         # currentId = "2"  # NOT 1 OR 0. IT CAN'T BE ENCODED
@@ -50,7 +55,7 @@ class Server:
         conn.settimeout(5)
 
         try:
-            current_name_not_decoded = conn.recv(2048)
+            current_name_not_decoded = conn.recv(4096)
         except:
             self.id_available_list += [player_id]
             self.id_available_list.sort()
@@ -96,7 +101,7 @@ class Server:
         tmp_current_data[player_id]['Package']['Map'] = TEST_MAP
         # Give client information about self
         try:
-            key = conn.recv(2048)
+            key = conn.recv(4096)
             key = key.decode('utf-8')
             print(key)
             packed_data = json.dumps(tmp_current_data[player_id])
@@ -113,7 +118,7 @@ class Server:
 
         while True:
             try:
-                data = conn.recv(2048).decode('utf-8')
+                data = conn.recv(4096).decode('utf-8')
                 print(type(data), "DATA")
                 reply = ast.literal_eval(data)
                 print(reply)
@@ -121,6 +126,7 @@ class Server:
                     conn.send(str.encode("Goodbye"))
                     break
                 else:
+                    # self.pos[player_id]['Package'] = {}
                     print("Received: ", reply)  # Info of Received
                     sending_data = {}
                     print("Sending Data", sending_data)
@@ -128,12 +134,26 @@ class Server:
                     print(self.id_using_list, 'IS_USING')
                     for key in self.pos.keys():
                         print(key)
-                        if key == cur_key:
-                            continue
+                        # if key == cur_key:
+                        #    sending_data['Package'] = self.pos[key]['Package']
+                        #    continue
                         sending_data[key] = self.pos[key]
+                        if key in self.id_using_list:
+                            self.pos[key]['Package']['World change'] += reply['Package']['World change']
                     print("Cur key", cur_key)
                     self.pos[cur_key] = {"Player Position": reply["Player Position"],
-                                         "Player Status": reply["Player Status"], 'Package': {}}
+                                         "Player Status": reply["Player Status"],
+                                         'Player Animation Type': reply['Player Animation Type'],
+                                         'Player Using State': reply['Player Using State'], 'Package': {'World change': []}}
+
+                    # print(len(reply['Package']['World change']), reply['Package']['World change'])
+                    for i in range(0, len(reply['Package']['World change']), 2):
+                        try:
+                            x, y = reply['Package']['World change'][i][0], \
+                                   reply['Package']['World change'][i][1]
+                            TEST_MAP[y][x] = reply['Package']['World change'][i + 1]
+                        except:
+                            continue
                     # arr = reply.split(":")  # Full decode data
                     # print(arr, 'arr')
                     # id = int(arr[0][1:])  # id sender
@@ -156,6 +176,12 @@ class Server:
         # self.pos[player_id] = self.pos[player_id][:-1] + '0'
         print(self.pos)
         print("Connection Closed")
+
+        # Reset animation and other states
+        self.pos[player_id]['Player Using State'] = 0
+        self.pos[player_id]['Player Animation Type'] = 0
+        self.pos[player_id]['Package'] = {'World change': []}
+
         self.registered_players[current_name] = self.pos[player_id]
         self.pos[player_id]['Player Status'] = 0
         print(self.pos)
@@ -183,6 +209,8 @@ class Server:
             start_new_thread(self.threaded_client, (conn, current_id))
 
 
-tmp = Server({'user': {'Player Position': (1214, 1287), 'Player Status': 1, 'Package': {}},
-              'tmp_1': {'Player Position': (800, 700), 'Player Status': 1, 'Package': {}}})
+tmp = Server({'user': {'Player Position': (1214, 1287), 'Player Status': 1, 'Player Animation Type': 0,
+                       'Player Using State': 0, 'Package': {'World change': []}},
+              'tmp_1': {'Player Position': (800, 700), 'Player Status': 1, 'Player Animation Type': 0,
+                        'Player Using State': 0, 'Package': {'World change': []}}})
 tmp.run()

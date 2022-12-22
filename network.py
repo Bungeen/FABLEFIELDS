@@ -25,7 +25,7 @@ class Network:
         self.client.settimeout(5)
         try:
             self.client.connect(self.addr)
-            tmp = self.client.recv(2048).decode()
+            tmp = self.client.recv(4096).decode()
         except:
             return '0XE000'
         return tmp
@@ -44,7 +44,7 @@ class Network:
                 print('FAILED SENDING NETWORK', 'First')
                 return '0XE000'
             try:
-                reply = self.client.recv(2048).decode("utf-8")
+                reply = self.client.recv(4096).decode("utf-8")
                 # print(reply)
                 reply_data = json.loads(reply)
             except:

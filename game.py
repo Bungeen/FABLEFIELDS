@@ -39,6 +39,9 @@ class Player(pygame.sprite.Sprite):
 
         self.status = status
 
+        self.animation_type = 0
+        self.using = 0
+
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
         self.speed = 2 * size
@@ -105,23 +108,9 @@ class Player(pygame.sprite.Sprite):
         self.image = self.image_top
 
     def move(self, dirn):
-        """
-        :param dirn: 0 - 3 (right, left, up, down)
-        :return: None
-        """
-
-        # if dirn == 0:
-        #     self.x += self.velocity
-        # elif dirn == 1:
-        #     self.x -= self.velocity
-        # elif dirn == 2:
-        #     self.y -= self.velocity
-        # else:
-        #     self.y += self.velocity
         self.activating()
 
     def update(self):
-        # self.input()
         self.rect.center += self.direction * self.speed
 
     def activating(self):
@@ -211,23 +200,30 @@ class CameraGroup(pygame.sprite.Group):
         # ground_offset = self.ground_rect.topleft - self.offset
         # self.display_surface.blit(self.ground_surf, ground_offset)
 
-
         if player.status == 1:
             selected_rect = (((player.rect.center[0]) // self.tile_size - 1) * self.tile_size,
                              (player.rect.center[
-                                  1]) // self.tile_size * self.tile_size) - self.offset
+                                 1]) // self.tile_size * self.tile_size) - self.offset
+            player.using_tile = (
+                (player.rect.center[0] // self.tile_size - 1), (player.rect.center[1] // self.tile_size))
         elif player.status == 2:
             selected_rect = (((player.rect.center[0]) // self.tile_size + 1) * self.tile_size,
                              (player.rect.center[
-                                  1]) // self.tile_size * self.tile_size) - self.offset
+                                 1]) // self.tile_size * self.tile_size) - self.offset
+            player.using_tile = (
+                (player.rect.center[0] // self.tile_size + 1), (player.rect.center[1] // self.tile_size))
         elif player.status == 3:
             selected_rect = (((player.rect.center[0]) // self.tile_size) * self.tile_size,
                              ((player.rect.center[
                                  1]) // self.tile_size + 1) * self.tile_size) - self.offset
+            player.using_tile = (
+                (player.rect.center[0] // self.tile_size), (player.rect.center[1] // self.tile_size + 1))
         elif player.status == 4:
             selected_rect = (((player.rect.center[0]) // self.tile_size) * self.tile_size,
                              ((player.rect.center[
                                  1]) // self.tile_size - 1) * self.tile_size) - self.offset
+            player.using_tile = (
+                (player.rect.center[0] // self.tile_size), (player.rect.center[1] // self.tile_size - 1))
         else:
             selected_rect = (-100000, -100000)
         image_selected = pygame.transform.scale(pygame.image.load('assets/Selected.png'),
@@ -261,7 +257,7 @@ class Game:
                 m = Menu(w, h)
                 m.run()
                 os._exit(1)
-            data = 'tmp_1'
+            data = 'user'
             print(data)
             df = self.net.send(data)
             if df == '0XE000':
@@ -292,6 +288,8 @@ class Game:
         self.base_id.remove(self.net.id)
         self.camera_group.map = self.map
 
+        self.package = {}
+
     # def render(self, screen):
     #     for y in range(20):
     #         for x in range(30):
@@ -302,8 +300,12 @@ class Game:
 
     def run(self):
         clock = pygame.time.Clock()
+        using = 0
         while self.is_running:
             clock.tick(60)
+
+            self.package = {'World change': []}
+
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
@@ -337,6 +339,27 @@ class Game:
                 self.player.coordinates.x -= self.player.speed
             else:
                 self.player.direction.x = 0
+
+            if self.player.using:
+                self.player.using -= 1
+
+            if keys[pygame.K_o]:
+                if not self.player.using:
+                    if self.player.using_tile != (-100000, -100000):
+                        if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] < len(
+                                self.map[0]):
+                            tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
+                            tile_id, tile_state = tile.split(' - ')
+                            if tile_id == '1':
+                                tile_id = 2
+                            else:
+                                tile_id = 1
+                            new_tile = f"{tile_id} - {tile_state}"
+                            self.package['World change'] = [self.player.using_tile, new_tile]
+                            print(new_tile, tile)
+                            self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
+                    self.player.using = 10
+
             self.player.activating()
             self.player.change_view()
 
@@ -347,11 +370,25 @@ class Game:
             data = self.send_data()
             for key in data.keys():
                 if key == self.base_id[0]:
-                    self.player2.rect.x, self.player2.rect.y, self.player2.status = self.parse_data(data[key])
+                    self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, self.player2.using = self.parse_data(
+                        data[key])
                 if key == self.base_id[1]:
-                    self.player3.rect.x, self.player3.rect.y, self.player3.status = self.parse_data(data[key])
+                    self.player3.rect.x, self.player3.rect.y, self.player3.status, self.player3.animation_type, self.player3.using = self.parse_data(
+                        data[key])
                 if key == self.base_id[2]:
-                    self.player4.rect.x, self.player4.rect.y, self.player4.status = self.parse_data(data[key])
+                    self.player4.rect.x, self.player4.rect.y, self.player4.status, self.player4.animation_type, self.player4.using = self.parse_data(
+                        data[key])
+                if key == self.net.id:
+                    for key_package in data[key]['Package'].keys():
+                        if key_package == 'World change':
+                            for i in range(0, len(data[key]['Package']['World change']), 2):
+                                x, y = data[key]['Package']['World change'][i][0], \
+                                       data[key]['Package']['World change'][i][1]
+                                self.map[y][x] = data[key]['Package']['World change'][i + 1]
+                            # print(data[key]['Package']['World change'])
+                            # print(data[key]['Package']['World change'])
+                            # x, y = data[key]['Package']['World change'][0][0], data[key]['Package']['World change'][0][1]
+                            # self.map[y][x] = data[key]['Package']['World change'][1]
 
             self.player2.change_view()
             self.player3.change_view()
@@ -359,15 +396,6 @@ class Game:
 
             # Update Canvas
             self.canvas.draw_background()
-            # if self.player.is_active:
-            #     print('Act')
-            #     self.player.draw(self.canvas.get_canvas())
-            # if self.player2.is_active:
-            #     print('Act2')
-            #     self.player2.draw(self.canvas.get_canvas())
-            # self.all_sprites.draw(self.canvas.get_canvas())
-            # self.canvas.update()
-            # self.render(self.canvas.get_canvas())
             self.camera_group.update()
             self.camera_group.custom_draw(self.player)
             self.canvas.update()
@@ -380,7 +408,9 @@ class Game:
         :return: None
         """
         data = {'ID': self.net.id, 'Player Position': (self.player.rect.x, self.player.rect.y),
-                'Player Status': self.player.status}
+                'Player Status': self.player.status, 'Player Animation Type': 0,
+                'Player Using State': self.player.using, 'Package': self.package}
+        # print(data)
         # data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
         # print(data)
         reply = self.net.send(data)
@@ -395,9 +425,10 @@ class Game:
     @staticmethod
     def parse_data(data):
         try:
-            d = [data['Player Position'][0], data['Player Position'][1], data['Player Status']]
+            d = [data['Player Position'][0], data['Player Position'][1], data['Player Status'],
+                 data['Player Animation Type'], data['Player Using State']]
             # print(int(d[0]), int(d[1]), bool(int(d[2])))
-            return int(d[0]), int(d[1]), int(d[2])
+            return int(d[0]), int(d[1]), int(d[2]), int(d[3]), int(d[4])
         except:
             return 0, 0, 0
 

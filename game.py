@@ -257,7 +257,7 @@ class Game:
                 m = Menu(w, h)
                 m.run()
                 os._exit(1)
-            data = 'user'
+            data = 'tmp_1'
             print(data)
             df = self.net.send(data)
             if df == '0XE000':
@@ -403,11 +403,9 @@ class Game:
         # pygame.quit()
 
     def send_data(self):
-        """
-        Send position to server
-        :return: None
-        """
-        data = {'ID': self.net.id, 'Player Position': (self.player.rect.x, self.player.rect.y),
+        size = max(pygame.display.get_surface().get_width() / (13 * 32),
+                   pygame.display.get_surface().get_height() / (8 * 32))
+        data = {'ID': self.net.id, 'Player Position': (self.player.rect.x / size, self.player.rect.y / size),
                 'Player Status': self.player.status, 'Player Animation Type': 0,
                 'Player Using State': self.player.using, 'Package': self.package}
         # print(data)
@@ -425,7 +423,9 @@ class Game:
     @staticmethod
     def parse_data(data):
         try:
-            d = [data['Player Position'][0], data['Player Position'][1], data['Player Status'],
+            size = max(pygame.display.get_surface().get_width() / (13 * 32),
+                       pygame.display.get_surface().get_height() / (8 * 32))
+            d = [data['Player Position'][0] * size, data['Player Position'][1] * size, data['Player Status'],
                  data['Player Animation Type'], data['Player Using State']]
             # print(int(d[0]), int(d[1]), bool(int(d[2])))
             return int(d[0]), int(d[1]), int(d[2]), int(d[3]), int(d[4])

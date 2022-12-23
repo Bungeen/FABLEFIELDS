@@ -308,7 +308,7 @@ class Game:
             m = Menu(w, h)
             m.run()
             sys.exit()
-        self.player = Player(self.camera_group, data['Player Position'], status=1)
+        self.player = Player(self.camera_group, (data['Player Position'][0] * size, data['Player Position'][1] * size), status=1)
         self.map = data['Package']['Map']
         # print((data[0] - 100, data[1] - 100))
         self.player2 = Player(self.camera_group, (100, 100), status=0)

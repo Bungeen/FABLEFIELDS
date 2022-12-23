@@ -209,8 +209,8 @@ class Server:
             start_new_thread(self.threaded_client, (conn, current_id))
 
 
-tmp = Server({'user': {'Player Position': (1214, 1287), 'Player Status': 1, 'Player Animation Type': 0,
+tmp = Server({'user': {'Player Position': (50, 50), 'Player Status': 1, 'Player Animation Type': 0,
                        'Player Using State': 0, 'Package': {'World change': []}},
-              'tmp_1': {'Player Position': (800, 700), 'Player Status': 1, 'Player Animation Type': 0,
+              'tmp_1': {'Player Position': (150, 150), 'Player Status': 1, 'Player Animation Type': 0,
                         'Player Using State': 0, 'Package': {'World change': []}}})
 tmp.run()

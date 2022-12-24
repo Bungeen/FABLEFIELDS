@@ -1,3 +1,4 @@
+import os
 import socket
 from _thread import *
 import sys
@@ -5,6 +6,7 @@ import sys
 import ast
 import time
 import json
+import random
 
 TEST_MAP = [['1 - 0', '1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '2 - 0'],
             ['1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '1 - 0'],
@@ -13,6 +15,9 @@ TEST_MAP = [['1 - 0', '1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '2 -
             ['2 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '1 - 0'],
             ['2 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '1 - 0']]
 
+TEST_FLAG = True
+
+DATA_BASE = {'3': [70, 20, 30]}
 
 class Server:
     def __init__(self, registered_players):
@@ -46,6 +51,47 @@ class Server:
                    'Package': {'World change': []}},
             'S3': {'Player Position': (0, 0), 'Player Status': 0, 'Player Animation Type': 0, 'Player Using State': 0,
                    'Package': {'World change': []}}}
+
+    def server_game_cycle(self):
+        while TEST_FLAG:
+            time.sleep(0.2)
+            changes = []
+            for y in range(len(TEST_MAP)):
+                for x in range(len(TEST_MAP[0])):
+                    tile = TEST_MAP[y][x]
+                    id_tile, id_state = map(str, tile.split(' - '))
+                    if id_tile in DATA_BASE.keys():
+                        if id_state in ['1', '2']:
+                            # print(id_tile)
+                            # os._exit(1)
+                            choice = random.randint(1, DATA_BASE[id_tile][0])
+                            if choice == 2:
+                                if id_state == '1':
+                                    id_state = '2'
+                                elif id_state == '2':
+                                    id_state = '3'
+                            new_tile = f"{id_tile} - {id_state}"
+                            changes += [(x, y), new_tile]
+                            TEST_MAP[y][x] = f"{id_tile} - {id_state}"
+                        elif id_state in ['4', '5']:
+                            choice = random.randint(1, DATA_BASE[id_tile][1])
+                            if choice == 2:
+                                if id_state == '4':
+                                    id_state = '5'
+                                elif id_state == '5':
+                                    id_state = '6'
+                            choice = random.randint(1, DATA_BASE[id_tile][2])
+                            if choice == 2:
+                                if id_state == '4':
+                                    id_state = '1'
+                                elif id_state == '5':
+                                    id_state = '2'
+                            new_tile = f"{id_tile} - {id_state}"
+                            changes += [(x, y), new_tile]
+                            TEST_MAP[y][x] = f"{id_tile} - {id_state}"
+            for key in self.pos.keys():
+                if key in self.id_using_list:
+                    self.pos[key]['Package']['World change'] += changes
 
     def threaded_client(self, conn, player_id):
         # currentId = "2"  # NOT 1 OR 0. IT CAN'T BE ENCODED
@@ -144,7 +190,8 @@ class Server:
                     self.pos[cur_key] = {"Player Position": reply["Player Position"],
                                          "Player Status": reply["Player Status"],
                                          'Player Animation Type': reply['Player Animation Type'],
-                                         'Player Using State': reply['Player Using State'], 'Package': {'World change': []}}
+                                         'Player Using State': reply['Player Using State'],
+                                         'Package': {'World change': []}}
 
                     # print(len(reply['Package']['World change']), reply['Package']['World change'])
                     for i in range(0, len(reply['Package']['World change']), 2):
@@ -192,6 +239,7 @@ class Server:
         print(self.id_available_list, self.id_using_list, self.logins_using_list)
 
     def run(self):
+        start_new_thread(self.server_game_cycle, ())
         while True:
             conn, addr = self.s.accept()
             print("Connected to: ", addr)

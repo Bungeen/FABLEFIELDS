@@ -48,7 +48,7 @@ class Connection_Menu:
                     if event.key == pygame.K_F10:
                         sys.exit()
                     if event.key == pygame.K_RETURN:
-                        g = game.Game(self.width, self.height, '176.212.70.112', 5555)
+                        g = game.Game(self.width, self.height, '192.168.1.44', 5555)
                         g.run()
                         os._exit(1)
                         # print(123)

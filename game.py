@@ -26,7 +26,7 @@ from menu import Menu
 class Player(pygame.sprite.Sprite):
     def __init__(self, group, pos, player_id=0, status=0):
         super().__init__(group)
-        sprite_sheet_image = pygame.image.load('assets/Character_Directions.png').convert_alpha()
+        sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
         self.image = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
         self.image_top = sprite_sheet.get_image(1, 32, 32, 4.5, (0, 0, 0))
@@ -34,6 +34,10 @@ class Player(pygame.sprite.Sprite):
         self.image_right = sprite_sheet.get_image(2, 32, 32, 4.5, (0, 0, 0))
         self.image_behind = sprite_sheet.get_image(4, 32, 32, 4.5, (0, 0, 0))
         self.image_nothing = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
+        self.image_top_box = sprite_sheet.get_image(5, 32, 32, 4.5, (0, 0, 0))
+        self.image_left_box = sprite_sheet.get_image(7, 32, 32, 4.5, (0, 0, 0))
+        self.image_right_box = sprite_sheet.get_image(6, 32, 32, 4.5, (0, 0, 0))
+        self.image_behind_box = sprite_sheet.get_image(8, 32, 32, 4.5, (0, 0, 0))
         size = max(pygame.display.get_surface().get_width() / (13 * 32),
                    pygame.display.get_surface().get_height() / (8 * 32))
 
@@ -72,29 +76,51 @@ class Player(pygame.sprite.Sprite):
             self.image = self.image_nothing
             return
         if self.direction.x == -1:
-            self.image = self.image_left
+            if self.animation_type == 0:
+                self.image = self.image_left
+            else:
+                self.image = self.image_left_box
             self.status = 1
         elif self.direction.x == 1:
-            self.image = self.image_right
+            if self.animation_type == 0:
+                self.image = self.image_right
+            else:
+                self.image = self.image_right_box
             self.status = 2
         elif self.direction.y == 1:
-            self.image = self.image_top
+            if self.animation_type == 0:
+                self.image = self.image_top
+            else:
+                self.image = self.image_top_box
             self.status = 3
         elif self.direction.y == -1:
-            self.image = self.image_behind
+            if self.animation_type == 0:
+                self.image = self.image_behind
+            else:
+                self.image = self.image_behind_box
             self.status = 4
         elif self.status != 0:
-            if self.status == 1:
-                self.image = self.image_left
-            elif self.status == 2:
-                self.image = self.image_right
-            elif self.status == 3:
-                self.image = self.image_top
-            elif self.status == 4:
-                self.image = self.image_behind
+            if self.animation_type == 0:
+                if self.status == 1:
+                    self.image = self.image_left
+                elif self.status == 2:
+                    self.image = self.image_right
+                elif self.status == 3:
+                    self.image = self.image_top
+                elif self.status == 4:
+                    self.image = self.image_behind
+            else:
+                if self.status == 1:
+                    self.image = self.image_left_box
+                elif self.status == 2:
+                    self.image = self.image_right_box
+                elif self.status == 3:
+                    self.image = self.image_top_box
+                elif self.status == 4:
+                    self.image = self.image_behind_box
 
     def resize_initialization(self, size, fl=False):
-        sprite_sheet_image = pygame.image.load('assets/Character_Directions.png').convert_alpha()
+        sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
         self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
         self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
@@ -102,6 +128,10 @@ class Player(pygame.sprite.Sprite):
         self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
         self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
         self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+        self.image_top_box = sprite_sheet.get_image(5, 32, 32, size, (0, 0, 0))
+        self.image_left_box = sprite_sheet.get_image(7, 32, 32, size, (0, 0, 0))
+        self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
+        self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
         self.speed = 2 * size
         if not fl:
             print(self.rect)
@@ -545,6 +575,7 @@ class Game:
                                         tile_state = '7'
                                     if tile_state == '3':
                                         tile_state = '0'
+                                    self.player.animation_type = int(tile_id)
                                     tile_id = '0'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
@@ -623,7 +654,7 @@ class Game:
         size = max(pygame.display.get_surface().get_width() / (13 * 32),
                    pygame.display.get_surface().get_height() / (8 * 32))
         data = {'ID': self.net.id, 'Player Position': (self.player.rect.x / size, self.player.rect.y / size),
-                'Player Status': self.player.status, 'Player Animation Type': 0,
+                'Player Status': self.player.status, 'Player Animation Type': self.player.animation_type,
                 'Player Using State': self.player.using, 'Package': self.package}
         # print(data)
         # data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'

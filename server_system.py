@@ -19,6 +19,9 @@ TEST_FLAG = True
 
 DATA_BASE = {'8': [70, 20, 30]}
 
+MONEY = 0
+
+
 class Server:
     def __init__(self, registered_players):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -162,6 +165,7 @@ class Server:
             conn.close()
             return
 
+        # ANIMATION_TYPES: 8-16 - Plants Types in hands
         while True:
             try:
                 data = conn.recv(4096).decode('utf-8')

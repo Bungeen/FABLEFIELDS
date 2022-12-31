@@ -47,6 +47,7 @@ class Player(pygame.sprite.Sprite):
         self.seed_type_selected = 0
         self.seed_type_can_use = [0]
         self.bucket_status = 0
+        self.seeds_id = ['8', '9', '10', '11', '12', '13', '14', '15', '16']
 
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
@@ -151,7 +152,9 @@ class CameraGroup(pygame.sprite.Group):
                                         (self.tile_size, self.tile_size)),
             '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
                                         (self.tile_size, self.tile_size)),
-            '3': {'1': pygame.transform.scale(
+            '3': pygame.transform.scale(pygame.image.load("assets/Water.png").convert_alpha(),
+                                        (self.tile_size, self.tile_size)),
+            '8': {'1': pygame.transform.scale(
                 pygame.image.load("assets/test_plant_first.png").convert_alpha(),
                 (self.tile_size, self.tile_size)),
                 '2': pygame.transform.scale(
@@ -276,9 +279,14 @@ class CameraGroup(pygame.sprite.Group):
                                                 (self.tile_size, self.tile_size))
             self.display_surface.blit(image_icon, (size_x, size_y))
         elif player.tool_type == 4:
-            image_icon = pygame.transform.scale(pygame.image.load('assets/Bucket.png'),
-                                                (self.tile_size, self.tile_size))
-            self.display_surface.blit(image_icon, (size_x, size_y))
+            if player.bucket_status == 1:
+                image_icon = pygame.transform.scale(pygame.image.load('assets/Bucket_Water.png'),
+                                                    (self.tile_size, self.tile_size))
+                self.display_surface.blit(image_icon, (size_x, size_y))
+            else:
+                image_icon = pygame.transform.scale(pygame.image.load('assets/Bucket.png'),
+                                                    (self.tile_size, self.tile_size))
+                self.display_surface.blit(image_icon, (size_x, size_y))
         else:
             image_icon = pygame.transform.scale(pygame.image.load('assets/Nothing.png'),
                                                 (self.tile_size, self.tile_size))
@@ -296,9 +304,16 @@ class CameraGroup(pygame.sprite.Group):
 
         if not player.changer:
             if player.tool_type == 1:
-                image_selected = pygame.transform.scale(pygame.image.load('assets/Selected.png'),
-                                                        (self.tile_size, self.tile_size))
-                self.display_surface.blit(image_selected, selected_rect)
+                if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] == '3':
+                    image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
+                                                            (self.tile_size, self.tile_size))
+                    self.display_surface.blit(image_selected, selected_rect)
+                    player.can_do = 0
+                else:
+                    image_selected = pygame.transform.scale(pygame.image.load('assets/Selected.png'),
+                                                            (self.tile_size, self.tile_size))
+                    self.display_surface.blit(image_selected, selected_rect)
+                    player.can_do = 1
             if player.tool_type == 2:
                 try:
                     if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] != '0' \
@@ -316,7 +331,7 @@ class CameraGroup(pygame.sprite.Group):
                     pass
             if player.tool_type == 3:
                 try:
-                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in ['3'] or \
+                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in player.seeds_id or \
                             self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[1] not in ['3', '6']:
                         image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
                                                                 (self.tile_size, self.tile_size))
@@ -331,7 +346,8 @@ class CameraGroup(pygame.sprite.Group):
                     pass
             if player.tool_type == 4:
                 try:
-                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in ['0', '3']:
+                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in player.seeds_id and \
+                            (self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in ['0', '3']):
                         image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
                                                                 (self.tile_size, self.tile_size))
                         self.display_surface.blit(image_selected, selected_rect)
@@ -483,7 +499,8 @@ class Game:
                 if keys[pygame.K_f]:
                     if not self.player.using:
                         # os._exit(1)
-                        if self.player.using_tile != (-100000, -100000) and self.player.tool_type == 1:
+                        if self.player.using_tile != (
+                                -100000, -100000) and self.player.tool_type == 1 and self.player.can_do:
                             # os._exit(1)
                             if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] < len(
                                     self.map[0]):
@@ -503,12 +520,12 @@ class Game:
                             self.player.using = 15
                         if self.player.tool_type == 2:
                             if self.player.can_do == 1:
-                                if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] < len(
-                                        self.map[0]):
+                                if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] \
+                                        < len(self.map[0]):
                                     tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
                                     tile_id, tile_state = tile.split(' - ')
                                     if self.player.seed_type_selected in self.player.seed_type_can_use:
-                                        tile_id = int(self.player.seed_type_selected) + 3
+                                        tile_id = int(self.player.seed_type_selected) + 8
                                         if tile_state == '7':
                                             tile_state = '4'
                                         if tile_state == '0':
@@ -520,8 +537,8 @@ class Game:
                             self.player.using = 15
                         if self.player.tool_type == 3:
                             if self.player.can_do == 1:
-                                if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] < len(
-                                        self.map[0]):
+                                if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] \
+                                        < len(self.map[0]):
                                     tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
                                     tile_id, tile_state = tile.split(' - ')
                                     if tile_state == '6':
@@ -536,18 +553,23 @@ class Game:
                             self.player.using = 15
                         if self.player.tool_type == 4:
                             if self.player.can_do == 1:
-                                if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] < len(
-                                        self.map[0]):
+                                if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] \
+                                        < len(self.map[0]):
                                     tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
                                     tile_id, tile_state = tile.split(' - ')
-                                    if tile_state == '0':
-                                        tile_state = '7'
-                                    if tile_state == '1':
-                                        tile_state = '4'
-                                    if tile_state == '2':
-                                        tile_state = '5'
-                                    if tile_state == '3':
-                                        tile_state = '6'
+                                    if tile_id == '3':
+                                        self.player.bucket_status = 1
+                                    else:
+                                        if self.player.bucket_status == 1:
+                                            if tile_state == '0':
+                                                tile_state = '7'
+                                            if tile_state == '1':
+                                                tile_state = '4'
+                                            if tile_state == '2':
+                                                tile_state = '5'
+                                            if tile_state == '3':
+                                                tile_state = '6'
+                                            self.player.bucket_status = 0
                                     # tile_state = '1'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]

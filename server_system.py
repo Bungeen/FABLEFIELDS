@@ -12,14 +12,17 @@ TEST_MAP = [['1 - 0', '1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '2 -
             ['1 - 0', '3 - 0', '1 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '1 - 0'],
             ['2 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '1 - 0', '1 - 0', '1 - 0'],
             ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0'],
-            ['2 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '2 - 0', '2 - 0', '1 - 0'],
+            ['2 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '2 - 0', '5 - 0', '1 - 0'],
             ['2 - 0', '1 - 0', '1 - 0', '2 - 0', '2 - 0', '1 - 0', '2 - 0', '1 - 0']]
 
-TEST_FLAG = True
 
-DATA_BASE = {'8': [70, 20, 30]}
+# TEST_FLAG = True
 
-MONEY = 0
+# DATA_BASE = {'8': [70, 20, 30]}
+
+# MONEY = 0
+
+# AVAILABLE_ITEMS = ['8']
 
 
 class Server:
@@ -55,19 +58,28 @@ class Server:
             'S3': {'Player Position': (0, 0), 'Player Status': 0, 'Player Animation Type': 0, 'Player Using State': 0,
                    'Package': {'World change': []}}}
 
+        self.available_items = ['8']
+        self.costs_for_buy = {'9': 10, '10': 25, '11': 25, '12': 25, '13': 25, '14': 25, '15': 25, '16': 25, '17': 25}
+        self.costs_for_sell = {'8': 3, '9': 6, '10': 7, '11': 7, '12': 7, '13': 7, '14': 7, '15': 7, '16': 7, '17': 7}
+        self.money = 0
+        self.data_base = {'8': [70, 20, 30], '9': [100, 20, 10], '10': [100, 20, 10], '11': [100, 20, 10],
+                          '12': [100, 20, 10], '13': [100, 20, 10], '14': [100, 20, 10], '15': [100, 20, 10],
+                          '16': [100, 20, 10], '17': [100, 20, 10]}
+        self.test_flag = True
+
     def server_game_cycle(self):
-        while TEST_FLAG:
+        while self.test_flag:
             time.sleep(0.2)
             changes = []
             for y in range(len(TEST_MAP)):
                 for x in range(len(TEST_MAP[0])):
                     tile = TEST_MAP[y][x]
                     id_tile, id_state = map(str, tile.split(' - '))
-                    if id_tile in DATA_BASE.keys():
+                    if id_tile in self.data_base.keys():
                         if id_state in ['1', '2']:
                             # print(id_tile)
                             # os._exit(1)
-                            choice = random.randint(1, DATA_BASE[id_tile][0])
+                            choice = random.randint(1, self.data_base[id_tile][0])
                             if choice == 2:
                                 if id_state == '1':
                                     id_state = '2'
@@ -77,13 +89,13 @@ class Server:
                             changes += [(x, y), new_tile]
                             TEST_MAP[y][x] = f"{id_tile} - {id_state}"
                         elif id_state in ['4', '5']:
-                            choice = random.randint(1, DATA_BASE[id_tile][1])
+                            choice = random.randint(1, self.data_base[id_tile][1])
                             if choice == 2:
                                 if id_state == '4':
                                     id_state = '5'
                                 elif id_state == '5':
                                     id_state = '6'
-                            choice = random.randint(1, DATA_BASE[id_tile][2])
+                            choice = random.randint(1, self.data_base[id_tile][2])
                             if choice == 2:
                                 if id_state == '4':
                                     id_state = '1'
@@ -104,7 +116,7 @@ class Server:
         conn.settimeout(5)
 
         try:
-            current_name_not_decoded = conn.recv(4096)
+            current_name_not_decoded = conn.recv(65536)
         except:
             self.id_available_list += [player_id]
             self.id_available_list.sort()
@@ -142,15 +154,17 @@ class Server:
                 except:
                     print(player_id, key, current_name)
                     sys.exit()
-        # self.pos[player_id]['Status'] = 1
-        # self.pos[int(player_id[1])] = f"{int(player_id[1])}:{self.registered_players[current_name]},0"
+
         print(self.pos)
         tmp_current_data = self.pos
         print(tmp_current_data)
         tmp_current_data[player_id]['Package']['Map'] = TEST_MAP
+        tmp_current_data[player_id]['Package']['Available Items'] = {'Seeds': self.available_items}
+        tmp_current_data[player_id]['Package']['Money'] = self.money
+
         # Give client information about self
         try:
-            key = conn.recv(4096)
+            key = conn.recv(65536)
             key = key.decode('utf-8')
             print(key)
             packed_data = json.dumps(tmp_current_data[player_id])
@@ -165,10 +179,11 @@ class Server:
             conn.close()
             return
 
-        # ANIMATION_TYPES: 8-16 - Plants Types in hands
+        # ANIMATION_TYPES: 8-16 - Plants Types in hands, 38-46 - SELL, 19-26 - BUY TYPE
         while True:
+            print("Start cycle")
             try:
-                data = conn.recv(4096).decode('utf-8')
+                data = conn.recv(65536).decode('utf-8')
                 print(type(data), "DATA")
                 reply = ast.literal_eval(data)
                 print(reply)
@@ -176,26 +191,44 @@ class Server:
                     conn.send(str.encode("Goodbye"))
                     break
                 else:
+
                     # self.pos[player_id]['Package'] = {}
                     print("Received: ", reply)  # Info of Received
+
+                    # Logistic interactions
+                    if reply["Player Animation Type"] in range(19, 27):
+                        if int(reply['Player Animation Type']) - 10 not in self.available_items and \
+                                self.costs_for_buy[str(int(reply['Player Animation Type']) - 10)] <= self.money:
+                            self.available_items += [str(int(reply['Player Animation Type']) - 10)]
+                            self.money -= self.costs_for_buy[str(int(reply['Player Animation Type']) - 10)]
+                        reply["Player Animation Type"] = 0
+                    elif reply["Player Animation Type"] in range(38, 47):
+                        print("ID SELL", str(int(reply['Player Animation Type'] - 30)))
+                        self.money += self.costs_for_sell[str(int(reply['Player Animation Type'] - 30))]
+                        reply["Player Animation Type"] = 0
+
                     sending_data = {}
                     print("Sending Data", sending_data)
                     cur_key = reply["ID"]
                     print(self.id_using_list, 'IS_USING')
                     for key in self.pos.keys():
                         print(key)
-                        # if key == cur_key:
-                        #    sending_data['Package'] = self.pos[key]['Package']
-                        #    continue
                         sending_data[key] = self.pos[key]
                         if key in self.id_using_list:
                             self.pos[key]['Package']['World change'] += reply['Package']['World change']
+                            print(self.pos[key]['Package'], self.money)
+                            self.pos[key]['Package']['Money'] = self.money
+                            self.pos[key]['Package']['Available Items'] = {'Seeds': self.available_items}
                     print("Cur key", cur_key)
+
                     self.pos[cur_key] = {"Player Position": reply["Player Position"],
                                          "Player Status": reply["Player Status"],
                                          'Player Animation Type': reply['Player Animation Type'],
                                          'Player Using State': reply['Player Using State'],
-                                         'Package': {'World change': []}}
+                                         'Package': {'World change': [], 'Money': self.money,
+                                                     'Available Items': {'Seeds': self.available_items}}}
+
+                    print("Saved data", self.pos[cur_key])
 
                     # print(len(reply['Package']['World change']), reply['Package']['World change'])
                     for i in range(0, len(reply['Package']['World change']), 2):
@@ -205,20 +238,6 @@ class Server:
                             TEST_MAP[y][x] = reply['Package']['World change'][i + 1]
                         except:
                             continue
-                    # arr = reply.split(":")  # Full decode data
-                    # print(arr, 'arr')
-                    # id = int(arr[0][1:])  # id sender
-                    # print(id, 'id')
-                    # self.pos[id] = reply  # Save new data
-                    # print(self.pos, 'pos')
-                #
-                # if id == 0: nid = 1  # Check who need to get new data
-                # if id == 1: nid = 0  # Check who need to get new data
-                #
-                # reply = self.pos[nid][:]  # COPY data
-                # print(reply, "reply")
-                #
-                # print("Sending: " + reply)  # Info of Sending
                 sending_data_packed = json.dumps(sending_data)
                 conn.sendall(bytes(sending_data_packed, encoding="utf-8"))
             except:
@@ -262,7 +281,9 @@ class Server:
 
 
 tmp = Server({'user': {'Player Position': (50, 50), 'Player Status': 1, 'Player Animation Type': 0,
-                       'Player Using State': 0, 'Package': {'World change': []}},
+                       'Player Using State': 0,
+                       'Package': {'World change': []}},
               'tmp_1': {'Player Position': (150, 150), 'Player Status': 1, 'Player Animation Type': 0,
-                        'Player Using State': 0, 'Package': {'World change': []}}})
+                        'Player Using State': 0,
+                        'Package': {'World change': []}}})
 tmp.run()

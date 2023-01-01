@@ -22,9 +22,28 @@ from menu import Menu
 #     image = pygame.image.load(fullname)
 #     return image
 
+class Border(pygame.sprite.Sprite):
+    def __init__(self, x1, y1, x2, y2, all_sprites, limited_group, display=False):
+        super().__init__(all_sprites)
+        self.add(limited_group)
+        if display:
+            self.image = pygame.Surface([abs(x2 - x1), abs(y2 - y1)])
+        else:
+            self.image = pygame.Surface([abs(x2 - x1), abs(y2 - y1)])
+            self.image.set_alpha(0)
+        self.rect = pygame.Rect(x1, y1, abs(x2 - x1), abs(y2 - y1))
+
+
+class Seller(pygame.sprite.Sprite):
+    def __init__(self, seller_group, tile_size):
+        super().__init__(seller_group)
+        self.image = pygame.transform.scale(pygame.image.load('assets/Seller.png').convert_alpha(),
+                                            (tile_size, tile_size))
+        self.rect = self.image.get_rect()
+
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, group, pos, player_id=0, status=0):
+    def __init__(self, group, pos, player_id=0, status=0, limited_group=pygame.sprite.Group()):
         super().__init__(group)
         sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
@@ -49,9 +68,10 @@ class Player(pygame.sprite.Sprite):
         self.can_do = 0
         self.changer = 0
         self.seed_type_selected = 0
-        self.seed_type_can_use = [0]
+        self.seed_type_can_use = ['8']
         self.bucket_status = 0
         self.seeds_id = ['8', '9', '10', '11', '12', '13', '14', '15', '16']
+        self.money = 0
 
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
@@ -66,6 +86,8 @@ class Player(pygame.sprite.Sprite):
         self.old_size = size
 
         self.using_tile = (-100000, -100000)
+
+        self.limited_group = limited_group
 
     # NETWORKING BREAKING
     #     keys = pygame.key.get_pressed()
@@ -149,6 +171,8 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.center += self.direction * self.speed
+        if pygame.sprite.spritecollideany(self, self.limited_group):
+            self.rect.center += (-self.direction) * self.speed * 2
 
     def activating(self):
         self.is_active = True
@@ -236,7 +260,7 @@ class CameraGroup(pygame.sprite.Group):
         self.offset.x = target.rect.centerx - self.half_width
         self.offset.y = target.rect.centery - self.half_height
 
-    def custom_draw(self, player):
+    def custom_draw(self, player, seller):
         self.half_width = self.display_surface.get_size()[0] // 2
         self.half_height = self.display_surface.get_size()[1] // 2
         self.center_target_camera(player)
@@ -247,8 +271,12 @@ class CameraGroup(pygame.sprite.Group):
             for x in range(len(self.map[0])):
                 tile = self.map[y][x]
                 id_tile, id_state = map(str, tile.split(' - '))
-                # print(id_tile)
                 ground_offset = (x * self.tile_size - self.offset[0], y * self.tile_size - self.offset[1])
+                if id_tile == '5':
+                    self.display_surface.blit(seller.image, ground_offset)
+                    seller.rect.topleft = ground_offset
+                    continue
+                # print(id_tile)
                 if type(self.tiled_base[id_tile]) == dict:
                     self.display_surface.blit(self.tiled_base[id_tile][id_state], ground_offset)
                 else:
@@ -265,6 +293,11 @@ class CameraGroup(pygame.sprite.Group):
         # ground
         # ground_offset = self.ground_rect.topleft - self.offset
         # self.display_surface.blit(self.ground_surf, ground_offset)
+
+        # active elements
+        for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
+            sprite_offset = sprite.rect.topleft - self.offset
+            self.display_surface.blit(sprite.image, sprite_offset)
 
         if player.status == 1:
             selected_rect = (((player.rect.center[0]) // self.tile_size - 1) * self.tile_size,
@@ -331,69 +364,80 @@ class CameraGroup(pygame.sprite.Group):
                 image_icon = pygame.transform.scale(pygame.image.load('assets/Nothing.png'),
                                                     (self.tile_size, self.tile_size))
                 self.display_surface.blit(image_icon, (size_x, size_y + self.tile_size))
+        if not (((player.using_tile[0] < 0 or player.using_tile[0] >= len(self.map[0]) or player.using_tile[1] < 0 or
+                  player.using_tile[1] >= len(self.map)))):
+            if not self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] == '5':
+                if not player.changer:
+                    if player.tool_type == 1:
+                        if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] == '3':
+                            image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
+                                                                    (self.tile_size, self.tile_size))
+                            self.display_surface.blit(image_selected, selected_rect)
+                            player.can_do = 0
+                        else:
+                            image_selected = pygame.transform.scale(pygame.image.load('assets/Selected.png'),
+                                                                    (self.tile_size, self.tile_size))
+                            self.display_surface.blit(image_selected, selected_rect)
+                            player.can_do = 1
+                    if player.tool_type == 2:
+                        try:
+                            if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] != '0':
+                                image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
+                                                                        (self.tile_size, self.tile_size))
+                                self.display_surface.blit(image_selected, selected_rect)
+                                player.can_do = 0
+                            else:
+                                image_selected = pygame.transform.scale(pygame.image.load('assets/Good_Selected.png'),
+                                                                        (self.tile_size, self.tile_size))
+                                self.display_surface.blit(image_selected, selected_rect)
+                                player.can_do = 1
+                        except:
+                            pass
+                    if player.tool_type == 3:
+                        try:
+                            if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[
+                                0] not in player.seeds_id or \
+                                    self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[1] not in ['3',
+                                                                                                                 '6'] or \
+                                    player.animation_type != 0:
+                                image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
+                                                                        (self.tile_size, self.tile_size))
+                                self.display_surface.blit(image_selected, selected_rect)
+                                player.can_do = 0
+                            else:
+                                image_selected = pygame.transform.scale(pygame.image.load('assets/Good_Selected.png'),
+                                                                        (self.tile_size, self.tile_size))
+                                self.display_surface.blit(image_selected, selected_rect)
+                                player.can_do = 1
+                        except:
+                            pass
+                    if player.tool_type == 4:
+                        try:
+                            if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[
+                                0] not in player.seeds_id and \
+                                    (self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in ['0',
+                                                                                                                  '3']):
+                                image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
+                                                                        (self.tile_size, self.tile_size))
+                                self.display_surface.blit(image_selected, selected_rect)
+                                player.can_do = 0
+                            else:
+                                image_selected = pygame.transform.scale(pygame.image.load('assets/Good_Selected.png'),
+                                                                        (self.tile_size, self.tile_size))
+                                self.display_surface.blit(image_selected, selected_rect)
+                                player.can_do = 1
+                        except:
+                            pass
+            else:
+                player.can_do = 0
+        else:
+            player.can_do = 0
 
-        if not player.changer:
-            if player.tool_type == 1:
-                if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] == '3':
-                    image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
-                                                            (self.tile_size, self.tile_size))
-                    self.display_surface.blit(image_selected, selected_rect)
-                    player.can_do = 0
-                else:
-                    image_selected = pygame.transform.scale(pygame.image.load('assets/Selected.png'),
-                                                            (self.tile_size, self.tile_size))
-                    self.display_surface.blit(image_selected, selected_rect)
-                    player.can_do = 1
-            if player.tool_type == 2:
-                try:
-                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] != '0' \
-                            or player.seed_type_selected not in player.seed_type_can_use:
-                        image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
-                                                                (self.tile_size, self.tile_size))
-                        self.display_surface.blit(image_selected, selected_rect)
-                        player.can_do = 0
-                    else:
-                        image_selected = pygame.transform.scale(pygame.image.load('assets/Good_Selected.png'),
-                                                                (self.tile_size, self.tile_size))
-                        self.display_surface.blit(image_selected, selected_rect)
-                        player.can_do = 1
-                except:
-                    pass
-            if player.tool_type == 3:
-                try:
-                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in player.seeds_id or \
-                            self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[1] not in ['3', '6']:
-                        image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
-                                                                (self.tile_size, self.tile_size))
-                        self.display_surface.blit(image_selected, selected_rect)
-                        player.can_do = 0
-                    else:
-                        image_selected = pygame.transform.scale(pygame.image.load('assets/Good_Selected.png'),
-                                                                (self.tile_size, self.tile_size))
-                        self.display_surface.blit(image_selected, selected_rect)
-                        player.can_do = 1
-                except:
-                    pass
-            if player.tool_type == 4:
-                try:
-                    if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in player.seeds_id and \
-                            (self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] not in ['0', '3']):
-                        image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
-                                                                (self.tile_size, self.tile_size))
-                        self.display_surface.blit(image_selected, selected_rect)
-                        player.can_do = 0
-                    else:
-                        image_selected = pygame.transform.scale(pygame.image.load('assets/Good_Selected.png'),
-                                                                (self.tile_size, self.tile_size))
-                        self.display_surface.blit(image_selected, selected_rect)
-                        player.can_do = 1
-                except:
-                    pass
-
-        # active elements
-        for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
-            sprite_offset = sprite.rect.topleft - self.offset
-            self.display_surface.blit(sprite.image, sprite_offset)
+        font = pygame.font.Font('assets/font.ttf', int(self.tile_size * 0.2))
+        money = font.render(f'Coins: {player.money}', True, (255, 255, 255))
+        money_rect = money.get_rect()
+        money_rect.topright = (self.display_surface.get_size()[0] - (self.tile_size * 0.1), (self.tile_size * 0.1))
+        self.display_surface.blit(money, money_rect)
 
 
 class Game:
@@ -439,15 +483,38 @@ class Game:
             m = Menu(w, h)
             m.run()
             sys.exit()
+
+        self.limited_group = pygame.sprite.Group()
+        self.seller_group = pygame.sprite.Group()
+
         self.player = Player(self.camera_group, (data['Player Position'][0] * size, data['Player Position'][1] * size),
-                             status=1)
+                             status=1, limited_group=self.limited_group)
         self.map = data['Package']['Map']
+
+        self.seller = Seller(self.seller_group, self.tile_size)
+
+        self.player.money = data['Package']['Money']
+        self.player.seed_type_can_use = data['Package']['Available Items']['Seeds']
         # print((data[0] - 100, data[1] - 100))
-        self.player2 = Player(self.camera_group, (100, 100), status=0)
-        self.player3 = Player(self.camera_group, (100, 100), status=0)
-        self.player4 = Player(self.camera_group, (100, 100), status=0)
+
+        self.player2 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group)
+        self.player3 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group)
+        self.player4 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group)
         self.base_id.remove(self.net.id)
         self.camera_group.map = self.map
+
+        self.bd1 = Border(-self.tile_size, -self.tile_size * 2, (len(self.map[0]) + 1) * self.tile_size,
+                          -self.tile_size * 0.25, self.camera_group, self.limited_group)
+        self.bd2 = Border(-self.tile_size, (len(self.map) + 0.25) * self.tile_size,
+                          (len(self.map[0]) + 1) * self.tile_size, (len(self.map) + 2) * self.tile_size,
+                          self.camera_group, self.limited_group)
+        self.bd3 = Border(-self.tile_size * 2, -self.tile_size, (-self.tile_size * 0.25),
+                          ((len(self.map) + 1) * self.tile_size),
+                          self.camera_group, self.limited_group)
+        self.bd4 = Border((len(self.map[0]) + 0.25) * self.tile_size, -self.tile_size,
+                          (len(self.map[0]) + 2) * self.tile_size,
+                          ((len(self.map) + 1) * self.tile_size),
+                          self.camera_group, self.limited_group)
 
         self.package = {}
 
@@ -466,7 +533,8 @@ class Game:
             clock.tick(60)
 
             self.package = {'World change': []}
-
+            if self.player.animation_type in range(38, 47):
+                self.player.animation_type = 0
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
@@ -515,7 +583,8 @@ class Game:
                     if not self.player.changer:
                         self.player.tool_type = (self.player.tool_type + 1) % 5
                     else:
-                        self.player.seed_type_selected = (self.player.seed_type_selected + 1) % 9
+                        self.player.seed_type_selected = (self.player.seed_type_selected + 1) % len(
+                            self.player.seed_type_can_use)
 
             if keys[pygame.K_q]:
                 if not self.player.using:
@@ -523,7 +592,8 @@ class Game:
                     if not self.player.changer:
                         self.player.tool_type = (self.player.tool_type - 1) % 5
                     else:
-                        self.player.seed_type_selected = (self.player.seed_type_selected - 1) % 9
+                        self.player.seed_type_selected = (self.player.seed_type_selected - 1) % len(
+                            self.player.seed_type_can_use)
 
             if not self.player.changer:
                 if keys[pygame.K_f]:
@@ -554,16 +624,15 @@ class Game:
                                         < len(self.map[0]):
                                     tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
                                     tile_id, tile_state = tile.split(' - ')
-                                    if self.player.seed_type_selected in self.player.seed_type_can_use:
-                                        tile_id = int(self.player.seed_type_selected) + 8
-                                        if tile_state == '7':
-                                            tile_state = '4'
-                                        if tile_state == '0':
-                                            tile_state = '1'
-                                        new_tile = f"{tile_id} - {tile_state}"
-                                        self.package['World change'] = [self.player.using_tile, new_tile]
-                                        print(new_tile, tile)
-                                        self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
+                                    tile_id = self.player.seed_type_can_use[self.player.seed_type_selected]
+                                    if tile_state == '7':
+                                        tile_state = '4'
+                                    if tile_state == '0':
+                                        tile_state = '1'
+                                    new_tile = f"{tile_id} - {tile_state}"
+                                    self.package['World change'] = [self.player.using_tile, new_tile]
+                                    print(new_tile, tile)
+                                    self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 3:
                             if self.player.can_do == 1:
@@ -611,6 +680,16 @@ class Game:
             self.player.activating()
             self.player.change_view()
 
+            if self.player.rect.x < -self.tile_size or self.player.rect.y < -self.tile_size or self.player.rect.x > (
+                    len(self.map[0]) + 1) * self.tile_size or self.player.rect.y > (len(self.map) + 1) * self.tile_size:
+                self.player.rect.x = self.tile_size
+                self.player.rect.y = self.tile_size
+
+            if pygame.sprite.spritecollideany(self.player, self.seller_group):
+                if self.player.animation_type in range(8, 17):
+                    self.player.animation_type += 30
+                    print(self.player.animation_type)
+
             # Send Network Stuff
             # self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data()
 
@@ -633,6 +712,10 @@ class Game:
                                 x, y = data[key]['Package']['World change'][i][0], \
                                        data[key]['Package']['World change'][i][1]
                                 self.map[y][x] = data[key]['Package']['World change'][i + 1]
+                        elif key_package == 'Money':
+                            self.player.money = data[key]['Package']['Money']
+                        elif key_package == 'Available Items':
+                            self.player.seed_type_can_use = data[key]['Package']['Available Items']['Seeds']
                             # print(data[key]['Package']['World change'])
                             # print(data[key]['Package']['World change'])
                             # x, y = data[key]['Package']['World change'][0][0], data[key]['Package']['World change'][0][1]
@@ -645,7 +728,7 @@ class Game:
             # Update Canvas
             self.canvas.draw_background()
             self.camera_group.update()
-            self.camera_group.custom_draw(self.player)
+            self.camera_group.custom_draw(self.player, self.seller)
             self.canvas.update()
 
         # pygame.quit()

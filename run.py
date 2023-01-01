@@ -6,4 +6,3 @@ if __name__ == "__main__":
     # g.run()
     m = menu.Menu(500, 500)
     m.run()
-a

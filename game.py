@@ -35,15 +35,24 @@ class Border(pygame.sprite.Sprite):
 
 
 class Seller(pygame.sprite.Sprite):
-    def __init__(self, seller_group, tile_size):
+    def __init__(self, seller_group, tile_size, pos):
         super().__init__(seller_group)
         self.image = pygame.transform.scale(pygame.image.load('assets/Seller.png').convert_alpha(),
                                             (tile_size, tile_size))
-        self.rect = self.image.get_rect()
+        self.rect = pygame.Rect(pos[0] * tile_size, pos[1] * tile_size, tile_size, tile_size)
+
+
+class Seller_Bought(pygame.sprite.Sprite):
+    def __init__(self, seller_group, tile_size, pos):
+        super().__init__(seller_group)
+        self.image = pygame.transform.scale(pygame.image.load('assets/SellerBox_Buy.png').convert_alpha(),
+                                            (tile_size, tile_size))
+        self.rect = pygame.Rect(pos[0] * tile_size, pos[1] * tile_size, tile_size, tile_size)
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, group, pos, player_id=0, status=0, limited_group=pygame.sprite.Group()):
+    def __init__(self, group, pos, player_id=0, status=0, limited_group=pygame.sprite.Group(),
+                 seller_group=pygame.sprite.Group(), seller_box_group=pygame.sprite.Group()):
         super().__init__(group)
         sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
@@ -72,6 +81,8 @@ class Player(pygame.sprite.Sprite):
         self.bucket_status = 0
         self.seeds_id = ['8', '9', '10', '11', '12', '13', '14', '15', '16']
         self.money = 0
+        self.can_buy = 0
+        self.costs = []
 
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
@@ -88,6 +99,8 @@ class Player(pygame.sprite.Sprite):
         self.using_tile = (-100000, -100000)
 
         self.limited_group = limited_group
+        self.seller_group = seller_group
+        self.seller_box_group = seller_box_group
 
     # NETWORKING BREAKING
     #     keys = pygame.key.get_pressed()
@@ -174,6 +187,16 @@ class Player(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, self.limited_group):
             self.rect.center += (-self.direction) * self.speed * 2
 
+        if pygame.sprite.spritecollideany(self, self.seller_group):
+            if self.animation_type in range(8, 17):
+                self.animation_type += 30
+                print(self.animation_type)
+
+        if pygame.sprite.spritecollideany(self, self.seller_box_group):
+            self.can_buy = 1
+        else:
+            self.can_buy = 0
+
     def activating(self):
         self.is_active = True
 
@@ -198,36 +221,240 @@ class CameraGroup(pygame.sprite.Group):
                    pygame.display.get_surface().get_height() / (8 * 32))
         self.tile_size = int(size * 32)
         self.tiled_base = {'0': {'0': pygame.transform.scale(
-            pygame.image.load("assets/test_dirt.png").convert_alpha(), (self.tile_size, self.tile_size)),
+            pygame.image.load("assets/Dirt.png").convert_alpha(), (self.tile_size, self.tile_size)),
             '7': pygame.transform.scale(
-                pygame.image.load("assets/test_dirt_water.png").convert_alpha(),
+                pygame.image.load("assets/Dirt_Water.png").convert_alpha(),
                 (self.tile_size, self.tile_size))},
-            '1': pygame.transform.scale(pygame.image.load("assets/test_grass_1.png").convert_alpha(),
+            '1': pygame.transform.scale(pygame.image.load("assets/Grass.png").convert_alpha(),
                                         (self.tile_size, self.tile_size)),
-            '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
-                                        (self.tile_size, self.tile_size)),
+            # '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
+            #                             (self.tile_size, self.tile_size)),
             '3': pygame.transform.scale(pygame.image.load("assets/Water.png").convert_alpha(),
                                         (self.tile_size, self.tile_size)),
             '8': {'1': pygame.transform.scale(
-                pygame.image.load("assets/test_plant_first.png").convert_alpha(),
+                pygame.image.load("assets/Wheat_First.png").convert_alpha(),
                 (self.tile_size, self.tile_size)),
                 '2': pygame.transform.scale(
-                    pygame.image.load("assets/test_plant_second.png").convert_alpha(),
+                    pygame.image.load("assets/Wheat_Second.png").convert_alpha(),
                     (self.tile_size, self.tile_size)),
                 '3': pygame.transform.scale(
-                    pygame.image.load("assets/test_plant_third.png").convert_alpha(),
+                    pygame.image.load("assets/Wheat_Third.png").convert_alpha(),
                     (self.tile_size, self.tile_size)),
                 '4': pygame.transform.scale(
-                    pygame.image.load("assets/test_plant_first_water.png").convert_alpha(),
+                    pygame.image.load("assets/Wheat_First_Water.png").convert_alpha(),
                     (self.tile_size, self.tile_size)),
                 '5': pygame.transform.scale(
-                    pygame.image.load("assets/test_plant_second_water.png").convert_alpha(),
+                    pygame.image.load("assets/Wheat_Second_Water.png").convert_alpha(),
                     (self.tile_size, self.tile_size)),
                 '6': pygame.transform.scale(
-                    pygame.image.load("assets/test_plant_third_water.png").convert_alpha(),
+                    pygame.image.load("assets/Wheat_Third_Water.png").convert_alpha(),
                     (self.tile_size, self.tile_size))
-            }}
+            },
+            '9': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Cucumbers_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Cucumbers_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Cucumbers_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Cucumbers_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Cucumbers_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Cucumbers_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '10': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Tomato_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Tomato_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Tomato_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Tomato_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Tomato_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Tomato_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '11': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Cabbage_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Cabbage_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Cabbage_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Cabbage_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Cabbage_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Cabbage_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '12': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Beet_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Beet_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Beet_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Beet_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Beet_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Beet_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '13': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Carrot_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Carrot_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Carrot_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Carrot_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Carrot_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Carrot_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '14': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Potato_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Potato_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Potato_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Potato_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Potato_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Potato_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '15': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Melon_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Melon_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Melon_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Melon_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Melon_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Melon_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            },
+            '16': {'1': pygame.transform.scale(
+                pygame.image.load("assets/Eggplant_First.png").convert_alpha(),
+                (self.tile_size, self.tile_size)),
+                '2': pygame.transform.scale(
+                    pygame.image.load("assets/Eggplant_Second.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '3': pygame.transform.scale(
+                    pygame.image.load("assets/Eggplant_Third.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '4': pygame.transform.scale(
+                    pygame.image.load("assets/Eggplant_First_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '5': pygame.transform.scale(
+                    pygame.image.load("assets/Eggplant_Second_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size)),
+                '6': pygame.transform.scale(
+                    pygame.image.load("assets/Eggplant_Third_Water.png").convert_alpha(),
+                    (self.tile_size, self.tile_size))
+            }
+        }
 
+        # MINIMUM SIZE IMPORTANT
+        size = int(min(pygame.display.get_surface().get_width() / (13),
+                       pygame.display.get_surface().get_height() / (8)))
+
+        self.icon_base = {'0': {'0': pygame.transform.scale(pygame.image.load('assets/Wheat_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Wheat_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '1': {
+                              '0': pygame.transform.scale(pygame.image.load('assets/Cucumber_Icon.png').convert_alpha(),
+                                                          (size, size)),
+                              '1': pygame.transform.scale(
+                                  pygame.image.load('assets/Cucumber_Icon_Bought.png').convert_alpha(),
+                                  (size, size))},
+                          '2': {'0': pygame.transform.scale(pygame.image.load('assets/Tomato_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Tomato_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '3': {'0': pygame.transform.scale(pygame.image.load('assets/Cabbage_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Cabbage_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '4': {'0': pygame.transform.scale(pygame.image.load('assets/Beet_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Beet_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '5': {'0': pygame.transform.scale(pygame.image.load('assets/Carrot_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Carrot_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '6': {'0': pygame.transform.scale(pygame.image.load('assets/Potato_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Potato_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '7': {'0': pygame.transform.scale(pygame.image.load('assets/Melon_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Melon_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          '8': {'0': pygame.transform.scale(pygame.image.load('assets/Eggplant_Icon.png').convert_alpha(),
+                                                            (size, size)),
+                                '1': pygame.transform.scale(
+                                    pygame.image.load('assets/Eggplant_Icon_Bought.png').convert_alpha(),
+                                    (size, size))},
+                          }
         # IMPORTANT. LOADING SAVE #################################
         # with open("maps/mapp.txt", 'r', encoding='utf8') as f:
         #     base = f.read().split('\n')
@@ -250,23 +477,23 @@ class CameraGroup(pygame.sprite.Group):
         #     tile_object.x *= int(400 / self.map.tilesize)
         #     tile_object.y *= int(400 / self.map.tilesize)
 
-    # def resize_initialization(self, size):
-    # self.ground_surf = pygame.image.load("graphics/ground.png").convert()
-    # self.ground_surf = pygame.transform.scale(self.ground_surf, (
-    #    self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
-    # self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
+        # def resize_initialization(self, size):
+        # self.ground_surf = pygame.image.load("graphics/ground.png").convert()
+        # self.ground_surf = pygame.transform.scale(self.ground_surf, (
+        #    self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
+        # self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
     def center_target_camera(self, target):
         self.offset.x = target.rect.centerx - self.half_width
         self.offset.y = target.rect.centery - self.half_height
 
-    def custom_draw(self, player, seller):
+    def custom_draw(self, player, seller, seller_box):
         self.half_width = self.display_surface.get_size()[0] // 2
         self.half_height = self.display_surface.get_size()[1] // 2
         self.center_target_camera(player)
 
-        # size = max(pygame.display.get_surface().get_width() / (13 * 32),
-        #            pygame.display.get_surface().get_height() / (8 * 32))
+        size = max(pygame.display.get_surface().get_width() / (13 * 32),
+                   pygame.display.get_surface().get_height() / (8 * 32))
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
                 tile = self.map[y][x]
@@ -274,14 +501,21 @@ class CameraGroup(pygame.sprite.Group):
                 ground_offset = (x * self.tile_size - self.offset[0], y * self.tile_size - self.offset[1])
                 if id_tile == '5':
                     self.display_surface.blit(seller.image, ground_offset)
-                    seller.rect.topleft = ground_offset
+                    # seller.rect.topleft = ground_offset
+                    # pygame.draw.rect(self.display_surface, '#FF00FF', seller.rect)
+                    continue
+                if id_tile == '6':
+                    self.display_surface.blit(seller_box.image, ground_offset)
+                    # seller_box.rect.topleft = ground_offset
+                    # pygame.draw.rect(self.display_surface, '#FFFF00', seller_box.rect)
                     continue
                 # print(id_tile)
                 if type(self.tiled_base[id_tile]) == dict:
                     self.display_surface.blit(self.tiled_base[id_tile][id_state], ground_offset)
                 else:
                     self.display_surface.blit(self.tiled_base[id_tile], ground_offset)
-
+        # pygame.draw.rect(self.display_surface, '#FF0000', player.rect)
+        # player.rect.topleft = (pygame.display.get_surface().get_width() / 2 - size / 2, pygame.display.get_surface().get_height() / 2 - size / 2)
         # for y in range(20):
         #     for x in range(30):
         #         image = pygame.transform.scale(self.map.get_tile_image(x, y, 0), (size * 32, size * 32))
@@ -356,17 +590,13 @@ class CameraGroup(pygame.sprite.Group):
             self.display_surface.blit(image_icon, (size_x, size_y))
 
         if player.changer or player.tool_type == 2:
-            if player.seed_type_selected == 0:
-                image_icon = pygame.transform.scale(pygame.image.load('assets/Test_Seed_Icon.png'),
-                                                    (self.tile_size, self.tile_size))
-                self.display_surface.blit(image_icon, (size_x, size_y + self.tile_size))
-            else:
-                image_icon = pygame.transform.scale(pygame.image.load('assets/Nothing.png'),
-                                                    (self.tile_size, self.tile_size))
-                self.display_surface.blit(image_icon, (size_x, size_y + self.tile_size))
+            image_icon = pygame.transform.scale(
+                self.icon_base[str(int(player.seed_type_can_use[player.seed_type_selected]) - 8)]['0'],
+                (self.tile_size, self.tile_size))
+            self.display_surface.blit(image_icon, (size_x, size_y + self.tile_size))
         if not (((player.using_tile[0] < 0 or player.using_tile[0] >= len(self.map[0]) or player.using_tile[1] < 0 or
                   player.using_tile[1] >= len(self.map)))):
-            if not self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] == '5':
+            if not self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] in ['5', '6']:
                 if not player.changer:
                     if player.tool_type == 1:
                         if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[0] == '3':
@@ -434,10 +664,62 @@ class CameraGroup(pygame.sprite.Group):
             player.can_do = 0
 
         font = pygame.font.Font('assets/font.ttf', int(self.tile_size * 0.2))
+
         money = font.render(f'Coins: {player.money}', True, (255, 255, 255))
         money_rect = money.get_rect()
         money_rect.topright = (self.display_surface.get_size()[0] - (self.tile_size * 0.1), (self.tile_size * 0.1))
         self.display_surface.blit(money, money_rect)
+
+        score = font.render(f'Score: NULL', True, (255, 255, 255))
+        score_rect = score.get_rect()
+        score_rect.topright = (
+            self.display_surface.get_size()[0] - (self.tile_size * 0.1),
+            (self.tile_size * 0.1) + int(self.tile_size * 0.3))
+        self.display_surface.blit(score, score_rect)
+
+        timer = font.render(f'Time: NULL', True, (255, 255, 255))
+        timer_rect = timer.get_rect()
+        timer_rect.topright = (
+            self.display_surface.get_size()[0] - (self.tile_size * 0.1),
+            self.display_surface.get_size()[1] - (self.tile_size * 0.3))
+        self.display_surface.blit(timer, timer_rect)
+
+        # MINIMUM SIZE IMPORTANT
+        size = int(min(pygame.display.get_surface().get_width() / (13),
+                       pygame.display.get_surface().get_height() / (8)))
+
+        if player.can_buy:
+            for i in range(9):
+                if str(i + 8) in player.seed_type_can_use:
+                    local_rect = self.icon_base[str(i)]['1'].get_rect()
+                    local_rect.topleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 1.3 * size)
+                    self.display_surface.blit(self.icon_base[str(i)]['1'],
+                                              local_rect)
+                    info_text = font.render(f'{i + 1}', True, (55, 55, 55))
+                    info_text_rect = timer.get_rect()
+                    info_text_rect.bottomleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                    self.display_surface.blit(info_text, info_text_rect)
+
+                    info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
+                    info_text_rect = timer.get_rect()
+                    info_text_rect.topright = (
+                        local_rect.topleft[0], pygame.display.get_surface().get_height() - 1.2 * size)
+                    self.display_surface.blit(info_text, info_text_rect.topright)
+                else:
+                    local_rect = self.icon_base[str(i)]['0'].get_rect()
+                    local_rect.topleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 1.3 * size)
+                    self.display_surface.blit(self.icon_base[str(i)]['0'],
+                                              local_rect)
+                    info_text = font.render(f'{i + 1}', True, (55, 55, 55))
+                    info_text_rect = timer.get_rect()
+                    info_text_rect.bottomleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                    self.display_surface.blit(info_text, info_text_rect)
+
+                    info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
+                    info_text_rect = timer.get_rect()
+                    info_text_rect.topright = (
+                        local_rect.topleft[0], pygame.display.get_surface().get_height() - 1.2 * size)
+                    self.display_surface.blit(info_text, info_text_rect.topright)
 
 
 class Game:
@@ -461,7 +743,7 @@ class Game:
                 m = Menu(w, h)
                 m.run()
                 os._exit(1)
-            data = 'tmp_1'
+            data = 'user123'
             print(data)
             df = self.net.send(data)
             if df == '0XE000':
@@ -486,20 +768,40 @@ class Game:
 
         self.limited_group = pygame.sprite.Group()
         self.seller_group = pygame.sprite.Group()
+        self.seller_box_group = pygame.sprite.Group()
 
         self.player = Player(self.camera_group, (data['Player Position'][0] * size, data['Player Position'][1] * size),
-                             status=1, limited_group=self.limited_group)
+                             status=1, limited_group=self.limited_group, seller_group=self.seller_group,
+                             seller_box_group=self.seller_box_group)
         self.map = data['Package']['Map']
+        self.costs = data['Package']['Costs']
+        self.player.costs = data['Package']['Costs']
+        pos_seller = []
+        pos_seller_box = []
 
-        self.seller = Seller(self.seller_group, self.tile_size)
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                tile = self.map[y][x]
+                id_tile, id_state = map(str, tile.split(' - '))
+                if id_tile == '5':
+                    pos_seller = [x, y]
+                    continue
+                if id_tile == '6':
+                    pos_seller_box = [x, y]
+                    continue
+
+        self.seller = Seller(self.seller_group, self.tile_size, pos_seller)
+        self.seller_box = Seller_Bought(self.seller_box_group, self.tile_size, pos_seller_box)
 
         self.player.money = data['Package']['Money']
         self.player.seed_type_can_use = data['Package']['Available Items']['Seeds']
-        # print((data[0] - 100, data[1] - 100))
 
-        self.player2 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group)
-        self.player3 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group)
-        self.player4 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group)
+        self.player2 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
+                              seller_group=self.seller_group, seller_box_group=self.seller_box_group)
+        self.player3 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
+                              seller_group=self.seller_group, seller_box_group=self.seller_box_group)
+        self.player4 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
+                              seller_group=self.seller_group, seller_box_group=self.seller_box_group)
         self.base_id.remove(self.net.id)
         self.camera_group.map = self.map
 
@@ -533,8 +835,11 @@ class Game:
             clock.tick(60)
 
             self.package = {'World change': []}
-            if self.player.animation_type in range(38, 47):
+            if (self.player.animation_type in range(38, 47) or self.player.animation_type in range(18, 27)) and using == 1:
                 self.player.animation_type = 0
+                using = 0
+            elif (self.player.animation_type in range(38, 47) or self.player.animation_type in range(18, 27)) and using == 0:
+                using = 1
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
@@ -607,8 +912,6 @@ class Game:
                                 tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
                                 tile_id, tile_state = tile.split(' - ')
                                 if tile_id == '1':
-                                    tile_id = 2
-                                elif tile_id == '2':
                                     tile_id = 0
                                 else:
                                     tile_id = 1
@@ -677,6 +980,33 @@ class Game:
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
 
+            print(self.player.animation_type)
+            if self.player.can_buy and self.player.animation_type == 0:
+                if keys[pygame.K_2] and self.costs['9'] <= self.player.money \
+                        and '9' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 19
+                elif keys[pygame.K_3] and self.costs['10'] <= self.player.money \
+                        and '10' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 20
+                elif keys[pygame.K_4] and self.costs['11'] <= self.player.money \
+                        and '11' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 21
+                elif keys[pygame.K_5] and self.costs['12'] <= self.player.money \
+                        and '12' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 22
+                elif keys[pygame.K_6] and self.costs['13'] <= self.player.money \
+                        and '13' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 23
+                elif keys[pygame.K_7] and self.costs['14'] <= self.player.money \
+                        and '14' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 24
+                elif keys[pygame.K_8] and self.costs['15'] <= self.player.money \
+                        and '15' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 25
+                elif keys[pygame.K_9] and self.costs['16'] <= self.player.money \
+                        and '16' not in self.player.seed_type_can_use:
+                    self.player.animation_type = 26
+
             self.player.activating()
             self.player.change_view()
 
@@ -684,11 +1014,6 @@ class Game:
                     len(self.map[0]) + 1) * self.tile_size or self.player.rect.y > (len(self.map) + 1) * self.tile_size:
                 self.player.rect.x = self.tile_size
                 self.player.rect.y = self.tile_size
-
-            if pygame.sprite.spritecollideany(self.player, self.seller_group):
-                if self.player.animation_type in range(8, 17):
-                    self.player.animation_type += 30
-                    print(self.player.animation_type)
 
             # Send Network Stuff
             # self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data()
@@ -728,7 +1053,7 @@ class Game:
             # Update Canvas
             self.canvas.draw_background()
             self.camera_group.update()
-            self.camera_group.custom_draw(self.player, self.seller)
+            self.camera_group.custom_draw(self.player, self.seller, self.seller_box)
             self.canvas.update()
 
         # pygame.quit()

@@ -19,13 +19,13 @@ class Network:
         self.addr = (self.host, self.port)
         self.id = self.connect()
         print(self.id)
-        self.client.settimeout(3)
+        # self.client.settimeout(3000)
 
     def connect(self):
-        self.client.settimeout(5)
+        # self.client.settimeout(5000)
         try:
             self.client.connect(self.addr)
-            tmp = self.client.recv(65536).decode()
+            tmp = self.client.recv(524288).decode()
         except:
             return '0XE000'
         return tmp
@@ -42,14 +42,25 @@ class Network:
                 # print('Continued', data)
             except:
                 print('FAILED SENDING NETWORK', 'First')
-                return '0XE000'
+                return '0XE000-FIRST'
             try:
-                reply = self.client.recv(65536).decode("utf-8")
-                # print(reply)
+                reply = self.client.recv(524288).decode("utf-8")
+                print(reply)
+                # tmp_2 = open('DEBUG.txt', 'r')
+                # ttt = tmp_2.readlines()
+                # tmp_2.close()
+                # tmp_1 = open('DEBUG.txt', 'w')
+                # tmp_3 = [str(reply)]
+                # tmp_1.writelines(tmp_3)
+                # tmp_1.close()
+            except:
+                print('FAILED GETTING NETWORK')
+                return '0XE000-SECOND'
+            try:
                 reply_data = json.loads(reply)
             except:
                 print('FAILED GETTING NETWORK')
-                return '0XE000'
+                return '0XE000-SECOND-JSON'
             # print(reply_data)
             return reply_data
         except socket.error as e:

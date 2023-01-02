@@ -4,32 +4,26 @@ import pygame
 class Menu_Widget(pygame.sprite.Sprite):
     def __init__(self, group, image):
         super().__init__(group)
-        self.size = max(pygame.display.get_surface().get_width() / (7 * 300),
-                        pygame.display.get_surface().get_height() / (3 * 400))
-        self.image = pygame.transform.scale(image, (300 * self.size, 400 * self.size)).convert_alpha()
+        self.size = max(pygame.display.get_surface().get_width() / (5 * 300),
+                        pygame.display.get_surface().get_height() / (2 * 279))
+        self.image = pygame.transform.scale(image, (300 * self.size, 279 * self.size)).convert_alpha()
         self.rect = self.image.get_rect()
 
         self.rect.centerx = pygame.display.get_surface().get_width() // 2
         self.rect.centery = pygame.display.get_surface().get_height() // 2
 
-        self.buttons_base_keys = ['menu', 'tutorial', 'singleplayer', 'multiplayer', 'settings', 'exit']
+        self.buttons_base_keys = ['menu', 'tutorial', 'play', 'exit']
         self.buttons_base = {'menu': [(self.rect.topleft[0], self.rect.topleft[1]), (
             self.rect.topleft[0] + self.image.get_size()[0], self.rect.topleft[1] + 100 * self.size)],
                              'tutorial': [(self.rect.topleft[0], self.rect.topleft[1] + 100 * self.size), (
                                  self.rect.topleft[0] + self.image.get_size()[0],
                                  self.rect.topleft[1] + 160 * self.size)],
-                             'singleplayer': [(self.rect.topleft[0], self.rect.topleft[1] + 160 * self.size), (
+                             'play': [(self.rect.topleft[0], self.rect.topleft[1] + 160 * self.size), (
                                  self.rect.topleft[0] + self.image.get_size()[0],
                                  self.rect.topleft[1] + 220 * self.size)],
-                             'multiplayer': [(self.rect.topleft[0], self.rect.topleft[1] + 220 * self.size), (
+                             'exit': [(self.rect.topleft[0], self.rect.topleft[1] + 220 * self.size), (
                                  self.rect.topleft[0] + self.image.get_size()[0],
-                                 self.rect.topleft[1] + 280 * self.size)],
-                             'settings': [(self.rect.topleft[0], self.rect.topleft[1] + 280 * self.size), (
-                                 self.rect.topleft[0] + self.image.get_size()[0],
-                                 self.rect.topleft[1] + 340 * self.size)],
-                             'exit': [(self.rect.topleft[0], self.rect.topleft[1] + 340 * self.size), (
-                                 self.rect.topleft[0] + self.image.get_size()[0],
-                                 self.rect.topleft[1] + 400 * self.size)]}
+                                 self.rect.topleft[1] + 280 * self.size)]}
 
     def checking_button(self, mouse_position=None):
         if mouse_position is None:

@@ -6,6 +6,8 @@ import sys
 
 from network import Network
 from menu_widget import Menu_Widget
+from select_game_widget import Select_Game_Widget
+# from menu import Menu
 
 import game
 
@@ -20,7 +22,8 @@ class Connection_Menu:
         pygame.display.set_caption('FABLEFIELDS')
 
         self.is_running = True
-        # self.group = pygame.sprite.Group()
+        self.group = pygame.sprite.Group()
+        self.widget = Select_Game_Widget(self.group, pygame.image.load("assets/Select_Game.png").convert_alpha())
         # self.widget = Menu_Widget(self.group, pygame.image.load("assets/menu.png").convert_alpha())
         self.font = pygame.font.Font("assets/font.ttf", 40)
         # self.TEXT_COLOR = "#FFFFFF"
@@ -34,7 +37,7 @@ class Connection_Menu:
     def run(self):
         # game loop
         while self.is_running:
-            self.screen.fill((52, 78, 91))
+            self.screen.fill('#6CAD34')
             mouse_position = pygame.mouse.get_pos()
 
             # event-handler
@@ -44,14 +47,20 @@ class Connection_Menu:
                 #     if tmp == 'multiplayer':
                 #         g = game.Game(self.width, self.height)
                 #         g.run()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    tmp = self.widget.checking_button(mouse_position)
+                    if tmp == 'back':
+                        # m = Menu(500, 500)
+                        # m.run()
+                        os._exit(1)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         sys.exit()
-                    if event.key == pygame.K_RETURN:
-                        g = game.Game(self.width, self.height, '188.235.166.223', 5555)
-                        g.run()
-                        os._exit(1)
-                        # print(123)
+                    # if event.key == pygame.K_RETURN:
+                    #     g = game.Game(self.width, self.height, '188.235.166.223', 5555)
+                    #     g.run()
+                    #     os._exit(1)
+                    #     # print(123)
                 if event.type == pygame.QUIT:
                     os._exit(1)
                     self.is_running = False

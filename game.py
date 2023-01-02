@@ -89,11 +89,11 @@ class Player(pygame.sprite.Sprite):
         self.direction = pygame.math.Vector2()
         self.speed = 2 * size
         self.rect = self.image.get_rect()
-        print(pos[0], pos[1])
+        # print(pos[0], pos[1])
         self.rect.x = pos[0]
         self.rect.y = pos[1]
-        print(pygame.display.get_surface().get_width(), pygame.display.get_surface().get_height())
-        print(self.rect.x, self.rect.y)
+        # print(pygame.display.get_surface().get_width(), pygame.display.get_surface().get_height())
+        # print(self.rect.x, self.rect.y)
         self.coordinates = pygame.math.Vector2(0, 0)
         self.old_size = size
 
@@ -169,11 +169,11 @@ class Player(pygame.sprite.Sprite):
         self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
         self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
         self.speed = 2 * size
-        if not fl:
-            print(self.rect)
+        # if not fl:
+            # print(self.rect)
             # self.rect.x += (size - self.old_size) * 32
             # self.rect.y += (size - self.old_size) * 32
-            print(self.rect)
+            # print(self.rect)
         self.old_size = size
         if self.status == 0:
             self.image = self.image_nothing
@@ -191,7 +191,7 @@ class Player(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, self.seller_group):
             if self.animation_type in range(8, 17):
                 self.animation_type += 30
-                print(self.animation_type)
+                # print(self.animation_type)
 
         if pygame.sprite.spritecollideany(self, self.seller_box_group):
             self.can_buy = 1
@@ -701,7 +701,8 @@ class CameraGroup(pygame.sprite.Group):
                                               local_rect)
                     info_text = font.render(f'{i + 1}', True, (55, 55, 55))
                     info_text_rect = timer.get_rect()
-                    info_text_rect.bottomleft = ((i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                    info_text_rect.bottomleft = (
+                    (i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
                     self.display_surface.blit(info_text, info_text_rect)
 
                     info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
@@ -716,7 +717,8 @@ class CameraGroup(pygame.sprite.Group):
                                               local_rect)
                     info_text = font.render(f'{i + 1}', True, (55, 55, 55))
                     info_text_rect = timer.get_rect()
-                    info_text_rect.bottomleft = ((i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                    info_text_rect.bottomleft = (
+                    (i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
                     self.display_surface.blit(info_text, info_text_rect)
 
                     info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
@@ -733,8 +735,9 @@ class CameraGroup(pygame.sprite.Group):
                 (self.tile_size * 1.5))
             self.display_surface.blit(ready, ready_rect)
 
+
 class Game:
-    def __init__(self, w, h, ip, port):
+    def __init__(self, w, h, ip, port, username='user'):
         self.base_id = ["S0", "S1", "S2", "S3"]
         pygame.init()
         self.width = w
@@ -742,7 +745,7 @@ class Game:
         size = max(pygame.display.get_surface().get_width() / (13 * 32),
                    pygame.display.get_surface().get_height() / (8 * 32))
         self.tile_size = int(size * 32)
-        print(self.width, self.height)
+        # print(self.width, self.height)
         self.canvas = Canvas(self.width, self.height)
         self.all_sprites = pygame.sprite.Group()
         self.camera_group = CameraGroup()
@@ -751,31 +754,43 @@ class Game:
             self.net = Network(ip, port)
             if self.net.id == '0XE000':
                 self.is_running = False
-                m = Menu(w, h)
-                m.run()
-                os._exit(1)
-            data = 'user123'
-            print(data)
+                self.game_going = 0
+                # sys.exit()
+                return
+                # m = Menu(w, h)
+                # m.run()
+                # os._exit(1)
+            data = username
+            # print(data)
             df = self.net.send(data)
             if df == '0XE000':
-                print(1)
+                # print(1)
                 self.is_running = False
-                m = Menu(w, h)
-                m.run()
-                os._exit(1)
+                self.game_going = 0
+                # sys.exit()
+                return
+                # m = Menu(w, h)
+                # m.run()
+                # os._exit(1)
         except:
             self.is_running = False
-            m = Menu(w, h)
-            m.run()
-            os._exit(1)
+            self.game_going = 0
+            # sys.exit()
+            return
+            # m = Menu(w, h)
+            # m.run()
+            # os._exit(1)
 
         # Take information about self
         data = self.net.send('KEY')
         if data == '0XE000':
             self.is_running = False
-            m = Menu(w, h)
-            m.run()
-            os._exit(1)
+            self.game_going = 0
+            # sys.exit()
+            return
+            # m = Menu(w, h)
+            # m.run()
+            # os._exit(1)
 
         self.limited_group = pygame.sprite.Group()
         self.seller_group = pygame.sprite.Group()
@@ -794,10 +809,13 @@ class Game:
         # Game already going - DISCONNECT
         if self.game_going:
             self.is_running = False
+            self.game_going = 0
             print('Game already going')
-            m = Menu(w, h)
-            m.run()
-            os._exit(1)
+            # sys.exit()
+            return
+            # m = Menu(w, h)
+            # m.run()
+            # os._exit(1)
 
         pos_seller = []
         pos_seller_box = []
@@ -854,7 +872,8 @@ class Game:
     def run(self):
         clock = pygame.time.Clock()
         using = 0
-        while not self.game_going:
+        # print(self.is_running)
+        while not self.game_going and self.is_running:
             clock.tick(20)
             self.package = {'World change': []}
             for event in pygame.event.get():
@@ -863,11 +882,15 @@ class Game:
                         os._exit(1)
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
-                        m = Menu(self.canvas.width, self.canvas.height)
-                        m.run()
-                        os._exit(1)
+                        self.game_going = 0
+                        # sys.exit()
+                        return
+                        # m = Menu(self.canvas.width, self.canvas.height)
+                        # m.run()
+                        # os._exit(1)
                 if event.type == pygame.QUIT:
                     self.is_running = False
+                    self.game_going = 0
                     print('EXIT')
                     os._exit(1)
 
@@ -887,7 +910,8 @@ class Game:
             self.camera_group.custom_draw(self.player, self.seller, self.seller_box)
             self.canvas.update()
 
-        self.player.animation_type = 0
+        if self.is_running:
+            self.player.animation_type = 0
 
         while self.is_running:
             clock.tick(60)
@@ -905,11 +929,14 @@ class Game:
                         os._exit(1)
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
-                        m = Menu(self.canvas.width, self.canvas.height)
-                        m.run()
-                        os._exit(1)
+                        self.game_going = 0
+                        return
+                        # m = Menu(self.canvas.width, self.canvas.height)
+                        # m.run()
+                        # os._exit(1)
                 if event.type == pygame.QUIT:
                     self.is_running = False
+                    self.game_going = 0
                     print('EXIT')
                     os._exit(1)
 
@@ -977,7 +1004,7 @@ class Game:
                                 tile_state = 0
                                 new_tile = f"{tile_id} - {tile_state}"
                                 self.package['World change'] = [self.player.using_tile, new_tile]
-                                print(new_tile, tile)
+                                # print(new_tile, tile)
                                 self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 2:
@@ -993,7 +1020,7 @@ class Game:
                                         tile_state = '1'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
-                                    print(new_tile, tile)
+                                    # print(new_tile, tile)
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 3:
@@ -1010,7 +1037,7 @@ class Game:
                                     tile_id = '0'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
-                                    print(new_tile, tile)
+                                    # print(new_tile, tile)
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 4:
@@ -1035,11 +1062,11 @@ class Game:
                                     # tile_state = '1'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
-                                    print(new_tile, tile)
+                                    # print(new_tile, tile)
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
 
-            print(self.player.animation_type)
+            # print(self.player.animation_type)
             if self.player.can_buy and self.player.animation_type == 0:
                 if keys[pygame.K_2] and self.costs['9'] <= self.player.money \
                         and '9' not in self.player.seed_type_can_use:
@@ -1079,6 +1106,7 @@ class Game:
 
             # Players synh
             data = self.send_data()
+            print(self.package)
             for key in data.keys():
                 if key == self.base_id[0]:
                     self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, \
@@ -1102,6 +1130,11 @@ class Game:
                             self.player.seed_type_can_use = data[key]['Package']['Available Items']['Seeds']
                         elif key_package == 'Time':
                             self.player.timer = int(data[key]['Package']['Time'])
+                        elif key_package == 'Map':
+                            self.player.map = data[key]['Package']['Map'].copy()
+                            self.map = data[key]['Package']['Map'].copy()
+                            self.camera_group.map = data[key]['Package']['Map'].copy()
+                            # print(data[key]['Package']['Map'])
 
             self.player2.change_view()
             self.player3.change_view()
@@ -1125,13 +1158,22 @@ class Game:
         # data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
         # print(data)
         reply = self.net.send(data)
-        print(reply, "GET_DATA_GAME")
+        # tmp_2 = open('DEBUG.txt', 'r')
+        # ttt = tmp_2.readlines()
+        # tmp_2.close()
+        # tmp_1 = open('DEBUG.txt', 'w')
+        # tmp_3 = ttt + [str(reply)]
+        # tmp_1.writelines(tmp_3)
+        # tmp_1.close()
+        # print(reply, "GET_DATA_GAME")
         if reply == '0XE000':
             self.is_running = False
             self.game_going = False
-            m = Menu(self.canvas.width, self.canvas.height)
-            m.run()
-            sys.exit()
+            # sys.exit()
+            return
+            # m = Menu(self.canvas.width, self.canvas.height)
+            # m.run()
+            # sys.exit()
         return reply
 
     @staticmethod
@@ -1153,7 +1195,7 @@ class Canvas(Menu):
         super().__init__(w, h)
         # self.initialization_screen()
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        print(self.width, self.height)
+        # print(self.width, self.height)
 
     @staticmethod
     def update():

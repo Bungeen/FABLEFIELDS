@@ -83,6 +83,7 @@ class Player(pygame.sprite.Sprite):
         self.money = 0
         self.can_buy = 0
         self.costs = []
+        self.timer = 0
 
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
@@ -424,11 +425,12 @@ class CameraGroup(pygame.sprite.Group):
                                 '1': pygame.transform.scale(
                                     pygame.image.load('assets/Tomato_Icon_Bought.png').convert_alpha(),
                                     (size, size))},
-                          '3': {'0': pygame.transform.scale(pygame.image.load('assets/Cabbage_Icon.png').convert_alpha(),
-                                                            (size, size)),
-                                '1': pygame.transform.scale(
-                                    pygame.image.load('assets/Cabbage_Icon_Bought.png').convert_alpha(),
-                                    (size, size))},
+                          '3': {
+                              '0': pygame.transform.scale(pygame.image.load('assets/Cabbage_Icon.png').convert_alpha(),
+                                                          (size, size)),
+                              '1': pygame.transform.scale(
+                                  pygame.image.load('assets/Cabbage_Icon_Bought.png').convert_alpha(),
+                                  (size, size))},
                           '4': {'0': pygame.transform.scale(pygame.image.load('assets/Beet_Icon.png').convert_alpha(),
                                                             (size, size)),
                                 '1': pygame.transform.scale(
@@ -449,11 +451,12 @@ class CameraGroup(pygame.sprite.Group):
                                 '1': pygame.transform.scale(
                                     pygame.image.load('assets/Melon_Icon_Bought.png').convert_alpha(),
                                     (size, size))},
-                          '8': {'0': pygame.transform.scale(pygame.image.load('assets/Eggplant_Icon.png').convert_alpha(),
-                                                            (size, size)),
-                                '1': pygame.transform.scale(
-                                    pygame.image.load('assets/Eggplant_Icon_Bought.png').convert_alpha(),
-                                    (size, size))},
+                          '8': {
+                              '0': pygame.transform.scale(pygame.image.load('assets/Eggplant_Icon.png').convert_alpha(),
+                                                          (size, size)),
+                              '1': pygame.transform.scale(
+                                  pygame.image.load('assets/Eggplant_Icon_Bought.png').convert_alpha(),
+                                  (size, size))},
                           }
         # IMPORTANT. LOADING SAVE #################################
         # with open("maps/mapp.txt", 'r', encoding='utf8') as f:
@@ -677,11 +680,12 @@ class CameraGroup(pygame.sprite.Group):
             (self.tile_size * 0.1) + int(self.tile_size * 0.3))
         self.display_surface.blit(score, score_rect)
 
-        timer = font.render(f'Time: NULL', True, (255, 255, 255))
+        format_time = time.strftime("%H:%M:%S", time.gmtime(player.timer))
+        timer = font.render(f'Time: {format_time}', True, (255, 255, 255))
         timer_rect = timer.get_rect()
-        timer_rect.topright = (
-            self.display_surface.get_size()[0] - (self.tile_size * 0.1),
-            self.display_surface.get_size()[1] - (self.tile_size * 0.3))
+        timer_rect.center = (
+            self.display_surface.get_size()[0] / 2,
+            (self.tile_size * 0.3))
         self.display_surface.blit(timer, timer_rect)
 
         # MINIMUM SIZE IMPORTANT
@@ -692,12 +696,12 @@ class CameraGroup(pygame.sprite.Group):
             for i in range(9):
                 if str(i + 8) in player.seed_type_can_use:
                     local_rect = self.icon_base[str(i)]['1'].get_rect()
-                    local_rect.topleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 1.3 * size)
+                    local_rect.topleft = ((i + 2.5) * size, pygame.display.get_surface().get_height() - 1.3 * size)
                     self.display_surface.blit(self.icon_base[str(i)]['1'],
                                               local_rect)
                     info_text = font.render(f'{i + 1}', True, (55, 55, 55))
                     info_text_rect = timer.get_rect()
-                    info_text_rect.bottomleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                    info_text_rect.bottomleft = ((i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
                     self.display_surface.blit(info_text, info_text_rect)
 
                     info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
@@ -707,12 +711,12 @@ class CameraGroup(pygame.sprite.Group):
                     self.display_surface.blit(info_text, info_text_rect.topright)
                 else:
                     local_rect = self.icon_base[str(i)]['0'].get_rect()
-                    local_rect.topleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 1.3 * size)
+                    local_rect.topleft = ((i + 2.5) * size, pygame.display.get_surface().get_height() - 1.3 * size)
                     self.display_surface.blit(self.icon_base[str(i)]['0'],
                                               local_rect)
                     info_text = font.render(f'{i + 1}', True, (55, 55, 55))
                     info_text_rect = timer.get_rect()
-                    info_text_rect.bottomleft = ((i + 3) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                    info_text_rect.bottomleft = ((i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
                     self.display_surface.blit(info_text, info_text_rect)
 
                     info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
@@ -721,6 +725,13 @@ class CameraGroup(pygame.sprite.Group):
                         local_rect.topleft[0], pygame.display.get_surface().get_height() - 1.2 * size)
                     self.display_surface.blit(info_text, info_text_rect.topright)
 
+        if player.animation_type == 2:
+            ready = font.render(f'Ready', True, (0, 155, 30))
+            ready_rect = ready.get_rect()
+            ready_rect.center = (
+                self.display_surface.get_size()[0] / 2,
+                (self.tile_size * 1.5))
+            self.display_surface.blit(ready, ready_rect)
 
 class Game:
     def __init__(self, w, h, ip, port):
@@ -764,7 +775,7 @@ class Game:
             self.is_running = False
             m = Menu(w, h)
             m.run()
-            sys.exit()
+            os._exit(1)
 
         self.limited_group = pygame.sprite.Group()
         self.seller_group = pygame.sprite.Group()
@@ -773,9 +784,21 @@ class Game:
         self.player = Player(self.camera_group, (data['Player Position'][0] * size, data['Player Position'][1] * size),
                              status=1, limited_group=self.limited_group, seller_group=self.seller_group,
                              seller_box_group=self.seller_box_group)
+
         self.map = data['Package']['Map']
         self.costs = data['Package']['Costs']
         self.player.costs = data['Package']['Costs']
+        self.player.timer = data['Package']['Time']
+        self.game_going = data['Package']['Game Status']
+
+        # Game already going - DISCONNECT
+        if self.game_going:
+            self.is_running = False
+            print('Game already going')
+            m = Menu(w, h)
+            m.run()
+            os._exit(1)
+
         pos_seller = []
         pos_seller_box = []
 
@@ -818,7 +841,7 @@ class Game:
                           ((len(self.map) + 1) * self.tile_size),
                           self.camera_group, self.limited_group)
 
-        self.package = {}
+        self.package = {'World change': []}
 
     # def render(self, screen):
     #     for y in range(20):
@@ -831,24 +854,60 @@ class Game:
     def run(self):
         clock = pygame.time.Clock()
         using = 0
-        while self.is_running:
-            clock.tick(60)
-
+        while not self.game_going:
+            clock.tick(20)
             self.package = {'World change': []}
-            if (self.player.animation_type in range(38, 47) or self.player.animation_type in range(18, 27)) and using == 1:
-                self.player.animation_type = 0
-                using = 0
-            elif (self.player.animation_type in range(38, 47) or self.player.animation_type in range(18, 27)) and using == 0:
-                using = 1
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
-                        sys.exit()
+                        os._exit(1)
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
                         m = Menu(self.canvas.width, self.canvas.height)
                         m.run()
-                        sys.exit()
+                        os._exit(1)
+                if event.type == pygame.QUIT:
+                    self.is_running = False
+                    print('EXIT')
+                    os._exit(1)
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_TAB]:
+                if self.player.animation_type:
+                    self.player.animation_type = 0
+                else:
+                    self.player.animation_type = 2
+
+            data = self.send_data()
+
+            self.game_going = data[self.net.id]['Package']['Game Status']
+
+            self.canvas.draw_background()
+            self.camera_group.update()
+            self.camera_group.custom_draw(self.player, self.seller, self.seller_box)
+            self.canvas.update()
+
+        self.player.animation_type = 0
+
+        while self.is_running:
+            clock.tick(60)
+            self.package = {'World change': []}
+            if (self.player.animation_type in range(38, 47) or self.player.animation_type in range(18,
+                                                                                                   27)) and using == 1:
+                self.player.animation_type = 0
+                using = 0
+            elif (self.player.animation_type in range(38, 47) or self.player.animation_type in range(18,
+                                                                                                     27)) and using == 0:
+                using = 1
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F10:
+                        os._exit(1)
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_running = False
+                        m = Menu(self.canvas.width, self.canvas.height)
+                        m.run()
+                        os._exit(1)
                 if event.type == pygame.QUIT:
                     self.is_running = False
                     print('EXIT')
@@ -1022,14 +1081,14 @@ class Game:
             data = self.send_data()
             for key in data.keys():
                 if key == self.base_id[0]:
-                    self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, self.player2.using = self.parse_data(
-                        data[key])
+                    self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, \
+                    self.player2.using = self.parse_data(data[key])
                 if key == self.base_id[1]:
-                    self.player3.rect.x, self.player3.rect.y, self.player3.status, self.player3.animation_type, self.player3.using = self.parse_data(
-                        data[key])
+                    self.player3.rect.x, self.player3.rect.y, self.player3.status, self.player3.animation_type, \
+                    self.player3.using = self.parse_data(data[key])
                 if key == self.base_id[2]:
-                    self.player4.rect.x, self.player4.rect.y, self.player4.status, self.player4.animation_type, self.player4.using = self.parse_data(
-                        data[key])
+                    self.player4.rect.x, self.player4.rect.y, self.player4.status, self.player4.animation_type, \
+                    self.player4.using = self.parse_data(data[key])
                 if key == self.net.id:
                     for key_package in data[key]['Package'].keys():
                         if key_package == 'World change':
@@ -1041,10 +1100,8 @@ class Game:
                             self.player.money = data[key]['Package']['Money']
                         elif key_package == 'Available Items':
                             self.player.seed_type_can_use = data[key]['Package']['Available Items']['Seeds']
-                            # print(data[key]['Package']['World change'])
-                            # print(data[key]['Package']['World change'])
-                            # x, y = data[key]['Package']['World change'][0][0], data[key]['Package']['World change'][0][1]
-                            # self.map[y][x] = data[key]['Package']['World change'][1]
+                        elif key_package == 'Time':
+                            self.player.timer = int(data[key]['Package']['Time'])
 
             self.player2.change_view()
             self.player3.change_view()
@@ -1071,6 +1128,7 @@ class Game:
         print(reply, "GET_DATA_GAME")
         if reply == '0XE000':
             self.is_running = False
+            self.game_going = False
             m = Menu(self.canvas.width, self.canvas.height)
             m.run()
             sys.exit()

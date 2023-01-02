@@ -59,17 +59,20 @@ class Server:
                    'Package': {'World change': []}}}
 
         self.available_items = ['8']
-        self.costs_for_buy = {'8': 0, '9': 10, '10': 25, '11': 25, '12': 25, '13': 25, '14': 25, '15': 25, '16': 25, '17': 25}
+        self.costs_for_buy = {'8': 0, '9': 10, '10': 25, '11': 25, '12': 25, '13': 25, '14': 25, '15': 25, '16': 25,
+                              '17': 25}
         self.costs_for_sell = {'8': 3, '9': 6, '10': 7, '11': 7, '12': 7, '13': 7, '14': 7, '15': 7, '16': 7, '17': 7}
         self.money = 0
         self.data_base = {'8': [70, 20, 30], '9': [100, 20, 10], '10': [100, 20, 10], '11': [100, 20, 10],
                           '12': [100, 20, 10], '13': [100, 20, 10], '14': [100, 20, 10], '15': [100, 20, 10],
                           '16': [100, 20, 10], '17': [100, 20, 10]}
-        self.test_flag = True
+        self.game_going = 0
+        self.timer = 1000
 
     def server_game_cycle(self):
-        while self.test_flag:
+        while self.game_going:
             time.sleep(0.2)
+            self.timer -= 0.2
             changes = []
             for y in range(len(TEST_MAP)):
                 for x in range(len(TEST_MAP[0])):
@@ -101,6 +104,15 @@ class Server:
                                     id_state = '1'
                                 elif id_state == '5':
                                     id_state = '2'
+                        if id_state in ['6']:
+                            choice = random.randint(1, self.data_base[id_tile][2])
+                            if choice == 2:
+                                id_state = '3'
+                    if id_tile == '0':
+                        if id_state == '1':
+                            choice = random.randint(1, 30)
+                            if choice == 2:
+                                id_state = '0'
                             new_tile = f"{id_tile} - {id_state}"
                             changes += [(x, y), new_tile]
                             TEST_MAP[y][x] = f"{id_tile} - {id_state}"
@@ -162,6 +174,8 @@ class Server:
         tmp_current_data[player_id]['Package']['Available Items'] = {'Seeds': self.available_items}
         tmp_current_data[player_id]['Package']['Money'] = self.money
         tmp_current_data[player_id]['Package']['Costs'] = self.costs_for_buy
+        tmp_current_data[player_id]['Package']['Time'] = self.timer
+        tmp_current_data[player_id]['Package']['Game Status'] = self.game_going
 
         # Give client information about self
         try:
@@ -220,6 +234,8 @@ class Server:
                             print(self.pos[key]['Package'], self.money)
                             self.pos[key]['Package']['Money'] = self.money
                             self.pos[key]['Package']['Available Items'] = {'Seeds': self.available_items}
+                            self.pos[key]['Package']['Time'] = self.timer
+                            self.pos[key]['Package']['Game Status'] = self.game_going
                     print("Cur key", cur_key)
 
                     self.pos[cur_key] = {"Player Position": reply["Player Position"],
@@ -239,6 +255,16 @@ class Server:
                             TEST_MAP[y][x] = reply['Package']['World change'][i + 1]
                         except:
                             continue
+
+                    for x in self.id_using_list:
+                        if self.pos[x]['Player Animation Type'] == 2:
+                            continue
+                        else:
+                            break
+                    else:
+                        if not self.game_going and len(self.id_using_list) > 0:
+                            self.game_going = 1
+                            start_new_thread(self.server_game_cycle, ())
                 sending_data_packed = json.dumps(sending_data)
                 conn.sendall(bytes(sending_data_packed, encoding="utf-8"))
             except:
@@ -263,7 +289,6 @@ class Server:
         print(self.id_available_list, self.id_using_list, self.logins_using_list)
 
     def run(self):
-        start_new_thread(self.server_game_cycle, ())
         while True:
             conn, addr = self.s.accept()
             print("Connected to: ", addr)

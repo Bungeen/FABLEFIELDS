@@ -9,8 +9,6 @@ import json
 import random
 
 
-
-
 # TEST_FLAG = True
 
 # DATA_BASE = {'8': [70, 20, 30]}
@@ -54,32 +52,39 @@ class Server:
                    'Package': {'World change': []}}}
 
         self.available_items = ['8']
-        self.costs_for_buy = {'8': 0, '9': 10, '10': 25, '11': 25, '12': 25, '13': 25, '14': 25, '15': 25, '16': 25,
-                              '17': 25}
-        self.costs_for_sell = {'8': 3, '9': 6, '10': 7, '11': 7, '12': 7, '13': 7, '14': 7, '15': 7, '16': 7, '17': 7}
+        self.costs_for_buy = {'8': 0, '9': 10, '10': 20, '11': 30, '12': 35, '13': 37, '14': 50, '15': 75, '16': 40}
+        self.costs_for_sell = {'8': 3, '9': 6, '10': 8, '11': 10, '12': 9, '13': 9, '14': 20, '15': 27, '16': 7,
+                               '17': 12}
         self.money = 0
-        self.data_base = {'8': [30, 10, 20], '9': [40, 10, 10], '10': [100, 20, 10], '11': [100, 20, 10],
-                          '12': [100, 20, 10], '13': [100, 20, 10], '14': [100, 20, 10], '15': [100, 20, 10],
-                          '16': [100, 20, 10], '17': [100, 20, 10]}
+        self.data_base = {'8': [30, 15, 20, 60], '9': [40, 15, 15, 40], '10': [45, 20, 20, 45], '11': [100, 25, 20, 30],
+                          '12': [50, 25, 30, 85], '13': [55, 25, 25, 80], '14': [90, 50, 35, 70],
+                          '15': [240, 60, 30, 25],
+                          '16': [90, 40, 40, 60]}
         self.game_going = 0
-        self.timer = 1000
+        self.timer = 300
         self.break_fl = 1
 
         self.TEST_MAP = [['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                    ['1 - 0', '3 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                    ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                    ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '6 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                    ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '5 - 0', '1 - 0'],
-                    ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0']]
+                         ['1 - 0', '3 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
+                         ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
+                         ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '6 - 0', '1 - 0', '1 - 0', '1 - 0'],
+                         ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '5 - 0', '1 - 0'],
+                         ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0']]
+
+        self.efficiency = 1.0
+        self.score = 0
 
     def server_game_cycle(self):
+        tmp = 0
         while self.game_going:
             print('WORKING')
+            random.seed(tmp)
+            print("SEED", tmp)
             time.sleep(1)
             self.timer -= 1
             changes = []
             tmp_map = self.TEST_MAP.copy()
-            print(tmp_map)
+            # print(tmp_map)
             for y in range(len(tmp_map)):
                 for x in range(len(tmp_map[0])):
                     tile = tmp_map[y][x]
@@ -89,35 +94,59 @@ class Server:
                             # print(id_tile)
                             # os._exit(1)
                             choice = random.randint(1, self.data_base[id_tile][0])
-                            if choice == 2:
+                            tmp += choice
+                            print(choice, x, y, 'GROW-DRO')
+                            if choice <= 5:
                                 if id_state == '1':
                                     id_state = '2'
                                 elif id_state == '2':
+                                    if self.efficiency + 0.005 <= 1.0:
+                                        self.efficiency += 0.005
                                     id_state = '3'
+                            choice = random.randint(1, self.data_base[id_tile][3])
+                            tmp += choice
+                            if choice <= 5:
+                                id_state = 0
+                                id_tile = 0
+                                self.efficiency /= 1.3
                             new_tile = f"{id_tile} - {id_state}"
                             changes += [(x, y), new_tile]
                             tmp_map[y][x] = f"{id_tile} - {id_state}"
                         elif id_state in ['4', '5']:
                             choice = random.randint(1, self.data_base[id_tile][1])
-                            if choice == 2:
+                            tmp += choice
+                            print(choice, x, y, 'WATERED')
+                            if choice <= 5:
                                 if id_state == '4':
                                     id_state = '5'
                                 elif id_state == '5':
+                                    if self.efficiency + 0.005 <= 1.0:
+                                        self.efficiency += 0.005
                                     id_state = '6'
                             choice = random.randint(1, self.data_base[id_tile][2])
-                            if choice == 2:
+                            tmp += choice
+                            print(choice, x, y, 'DRO')
+                            if choice <= 5:
                                 if id_state == '4':
                                     id_state = '1'
                                 elif id_state == '5':
                                     id_state = '2'
                         if id_state in ['6']:
                             choice = random.randint(1, self.data_base[id_tile][2])
-                            if choice == 2:
+                            tmp += choice
+                            print(choice, x, y, 'DRO-E')
+                            if choice <= 5:
                                 id_state = '3'
+                        new_tile = f"{id_tile} - {id_state}"
+                        changes += [(x, y), new_tile]
+                        tmp_map[y][x] = f"{id_tile} - {id_state}"
                     if id_tile == '0':
-                        if id_state == '1':
-                            choice = random.randint(1, 30)
-                            if choice == 2:
+                        # print(id_tile, id_state)
+                        if id_state == '7':
+                            choice = random.randint(1, 100)
+                            tmp += choice
+                            print(choice, x, y, 'DRO-00')
+                            if choice <= 5:
                                 id_state = '0'
                             new_tile = f"{id_tile} - {id_state}"
                             changes += [(x, y), new_tile]
@@ -126,6 +155,9 @@ class Server:
                 if key in self.id_using_list:
                     self.pos[key]['Package']['World change'] += changes
             self.TEST_MAP = tmp_map
+            print('###########################################')
+            print(tmp_map, self.TEST_MAP)
+            print('###########################################')
 
     def threaded_client(self, conn, player_id):
         # currentId = "2"  # NOT 1 OR 0. IT CAN'T BE ENCODED
@@ -219,14 +251,20 @@ class Server:
 
                     # Logistic interactions
                     if reply["Player Animation Type"] in range(19, 27):
-                        if int(reply['Player Animation Type']) - 10 not in self.available_items and \
+                        if str(int(reply['Player Animation Type']) - 10) not in self.available_items and \
                                 self.costs_for_buy[str(int(reply['Player Animation Type']) - 10)] <= self.money:
                             self.available_items += [str(int(reply['Player Animation Type']) - 10)]
                             self.money -= self.costs_for_buy[str(int(reply['Player Animation Type']) - 10)]
+                            self.score += int(25 * self.costs_for_buy[str(int(reply['Player Animation Type']) - 10)])
                         reply["Player Animation Type"] = 0
                     elif reply["Player Animation Type"] in range(38, 47):
                         # print("ID SELL", str(int(reply['Player Animation Type'] - 30)))
                         self.money += self.costs_for_sell[str(int(reply['Player Animation Type'] - 30))]
+                        tmp_score = self.costs_for_sell[
+                                        str(int(reply['Player Animation Type'] - 30))] * 10 * self.efficiency
+                        if tmp_score < 1:
+                            tmp_score = 1
+                        self.score += int(tmp_score)
                         reply["Player Animation Type"] = 0
 
                     sending_data = {}
@@ -250,18 +288,21 @@ class Server:
                                          'Player Animation Type': reply['Player Animation Type'],
                                          'Player Using State': reply['Player Using State'],
                                          'Package': {'World change': [], 'Money': self.money,
-                                                     'Available Items': {'Seeds': self.available_items}}}
+                                                     'Available Items': {'Seeds': self.available_items},
+                                                     'Score': self.score}}
 
                     # print("Saved data", self.pos[cur_key])
 
                     # print(len(reply['Package']['World change']), reply['Package']['World change'])
+                    tmp_map = self.TEST_MAP.copy()
                     for i in range(0, len(reply['Package']['World change']), 2):
                         try:
                             x, y = reply['Package']['World change'][i][0], \
                                    reply['Package']['World change'][i][1]
-                            self.TEST_MAP[y][x] = reply['Package']['World change'][i + 1]
+                            tmp_map[y][x] = reply['Package']['World change'][i + 1]
                         except:
                             continue
+                    self.TEST_MAP = tmp_map
 
                     for x in self.id_using_list:
                         if self.pos[x]['Player Animation Type'] == 2:
@@ -274,12 +315,6 @@ class Server:
                             start_new_thread(self.server_game_cycle, ())
 
                 sending_data[player_id]['Package']['Map'] = self.TEST_MAP.copy()
-                # sending_data[player_id]['Package']['Map'] = [['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                #     ['1 - 0', '3 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                #     ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                #     ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '6 - 0', '1 - 0', '1 - 0', '1 - 0'],
-                #     ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '5 - 0', '1 - 0'],
-                #     ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0']]
                 print(sending_data[player_id]['Package']['Map'])
                 sending_data[player_id]['Package']['World change'] = []
                 # sending_data['S1']['Package']['World change'] = []
@@ -329,6 +364,11 @@ class Server:
 
     def cheacker(self):
         while self.break_fl:
+            if self.timer <= 0:
+                self.break_fl = False
+                time.sleep(2)
+                self.s.close()
+                sys.exit()
             time.sleep(0.5)
             continue
         print('BREAK')

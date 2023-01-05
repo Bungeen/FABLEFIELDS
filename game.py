@@ -84,6 +84,7 @@ class Player(pygame.sprite.Sprite):
         self.can_buy = 0
         self.costs = []
         self.timer = 0
+        self.score = 0
 
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
@@ -673,7 +674,7 @@ class CameraGroup(pygame.sprite.Group):
         money_rect.topright = (self.display_surface.get_size()[0] - (self.tile_size * 0.1), (self.tile_size * 0.1))
         self.display_surface.blit(money, money_rect)
 
-        score = font.render(f'Score: NULL', True, (255, 255, 255))
+        score = font.render(f'Score: {player.score}', True, (255, 255, 255))
         score_rect = score.get_rect()
         score_rect.topright = (
             self.display_surface.get_size()[0] - (self.tile_size * 0.1),
@@ -1107,34 +1108,41 @@ class Game:
             # Players synh
             data = self.send_data()
             print(self.package)
-            for key in data.keys():
-                if key == self.base_id[0]:
-                    self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, \
-                    self.player2.using = self.parse_data(data[key])
-                if key == self.base_id[1]:
-                    self.player3.rect.x, self.player3.rect.y, self.player3.status, self.player3.animation_type, \
-                    self.player3.using = self.parse_data(data[key])
-                if key == self.base_id[2]:
-                    self.player4.rect.x, self.player4.rect.y, self.player4.status, self.player4.animation_type, \
-                    self.player4.using = self.parse_data(data[key])
-                if key == self.net.id:
-                    for key_package in data[key]['Package'].keys():
-                        if key_package == 'World change':
-                            for i in range(0, len(data[key]['Package']['World change']), 2):
-                                x, y = data[key]['Package']['World change'][i][0], \
-                                       data[key]['Package']['World change'][i][1]
-                                self.map[y][x] = data[key]['Package']['World change'][i + 1]
-                        elif key_package == 'Money':
-                            self.player.money = data[key]['Package']['Money']
-                        elif key_package == 'Available Items':
-                            self.player.seed_type_can_use = data[key]['Package']['Available Items']['Seeds']
-                        elif key_package == 'Time':
-                            self.player.timer = int(data[key]['Package']['Time'])
-                        elif key_package == 'Map':
-                            self.player.map = data[key]['Package']['Map'].copy()
-                            self.map = data[key]['Package']['Map'].copy()
-                            self.camera_group.map = data[key]['Package']['Map'].copy()
-                            # print(data[key]['Package']['Map'])
+            try:
+                for key in data.keys():
+                    if key == self.base_id[0]:
+                        self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, \
+                        self.player2.using = self.parse_data(data[key])
+                    if key == self.base_id[1]:
+                        self.player3.rect.x, self.player3.rect.y, self.player3.status, self.player3.animation_type, \
+                        self.player3.using = self.parse_data(data[key])
+                    if key == self.base_id[2]:
+                        self.player4.rect.x, self.player4.rect.y, self.player4.status, self.player4.animation_type, \
+                        self.player4.using = self.parse_data(data[key])
+                    if key == self.net.id:
+                        for key_package in data[key]['Package'].keys():
+                            if key_package == 'World change':
+                                for i in range(0, len(data[key]['Package']['World change']), 2):
+                                    x, y = data[key]['Package']['World change'][i][0], \
+                                           data[key]['Package']['World change'][i][1]
+                                    self.map[y][x] = data[key]['Package']['World change'][i + 1]
+                            elif key_package == 'Money':
+                                self.player.money = data[key]['Package']['Money']
+                            elif key_package == 'Available Items':
+                                self.player.seed_type_can_use = data[key]['Package']['Available Items']['Seeds']
+                            elif key_package == 'Time':
+                                self.player.timer = int(data[key]['Package']['Time'])
+                            elif key_package == 'Map':
+                                self.player.map = data[key]['Package']['Map'].copy()
+                                self.map = data[key]['Package']['Map'].copy()
+                                self.camera_group.map = data[key]['Package']['Map'].copy()
+                            elif key_package == 'Score':
+                                self.player.score = int(data[key]['Package']['Score'])
+                                # print(data[key]['Package']['Map'])
+            except:
+                self.is_running = False
+                self.game_going = False
+                return
 
             self.player2.change_view()
             self.player3.change_view()

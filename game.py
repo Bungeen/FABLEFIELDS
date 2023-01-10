@@ -51,7 +51,7 @@ class Seller_Bought(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, group, pos, player_id=0, status=0, limited_group=pygame.sprite.Group(),
+    def __init__(self, group, pos, player_id='', status=0, limited_group=pygame.sprite.Group(),
                  seller_group=pygame.sprite.Group(), seller_box_group=pygame.sprite.Group()):
         super().__init__(group)
         sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
@@ -85,6 +85,7 @@ class Player(pygame.sprite.Sprite):
         self.costs = []
         self.timer = 0
         self.score = 0
+        self.id = player_id
 
         self.resize_initialization(size, True)
         self.direction = pygame.math.Vector2()
@@ -157,24 +158,39 @@ class Player(pygame.sprite.Sprite):
                     self.image = self.image_behind_box
 
     def resize_initialization(self, size, fl=False):
-        sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
-        sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
-        self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
-        self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
-        self.image_left = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
-        self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
-        self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
-        self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
-        self.image_top_box = sprite_sheet.get_image(5, 32, 32, size, (0, 0, 0))
-        self.image_left_box = sprite_sheet.get_image(7, 32, 32, size, (0, 0, 0))
-        self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
-        self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
-        self.speed = 2 * size
+        if self.id in ['S0', 'S2']:
+            sprite_sheet_image = pygame.image.load('assets/Character_Second_Animated.png').convert_alpha()
+            sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+            self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
+            self.image_left = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+            self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
+            self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
+            self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top_box = sprite_sheet.get_image(5, 32, 32, size, (0, 0, 0))
+            self.image_left_box = sprite_sheet.get_image(7, 32, 32, size, (0, 0, 0))
+            self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
+            self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
+            self.speed = 2 * size
+        else:
+            sprite_sheet_image = pygame.image.load('assets/Character_First_Animated.png').convert_alpha()
+            sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+            self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
+            self.image_left = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+            self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
+            self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
+            self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top_box = sprite_sheet.get_image(5, 32, 32, size, (0, 0, 0))
+            self.image_left_box = sprite_sheet.get_image(7, 32, 32, size, (0, 0, 0))
+            self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
+            self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
+            self.speed = 2 * size
         # if not fl:
-            # print(self.rect)
-            # self.rect.x += (size - self.old_size) * 32
-            # self.rect.y += (size - self.old_size) * 32
-            # print(self.rect)
+        # print(self.rect)
+        # self.rect.x += (size - self.old_size) * 32
+        # self.rect.y += (size - self.old_size) * 32
+        # print(self.rect)
         self.old_size = size
         if self.status == 0:
             self.image = self.image_nothing
@@ -232,6 +248,8 @@ class CameraGroup(pygame.sprite.Group):
             # '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
             #                             (self.tile_size, self.tile_size)),
             '3': pygame.transform.scale(pygame.image.load("assets/Water.png").convert_alpha(),
+                                        (self.tile_size, self.tile_size)),
+            '4': pygame.transform.scale(pygame.image.load("assets/Base_Plate.png").convert_alpha(),
                                         (self.tile_size, self.tile_size)),
             '8': {'1': pygame.transform.scale(
                 pygame.image.load("assets/Wheat_First.png").convert_alpha(),
@@ -703,7 +721,7 @@ class CameraGroup(pygame.sprite.Group):
                     info_text = font.render(f'{i + 1}', True, (55, 55, 55))
                     info_text_rect = timer.get_rect()
                     info_text_rect.bottomleft = (
-                    (i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                        (i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
                     self.display_surface.blit(info_text, info_text_rect)
 
                     info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
@@ -719,7 +737,7 @@ class CameraGroup(pygame.sprite.Group):
                     info_text = font.render(f'{i + 1}', True, (55, 55, 55))
                     info_text_rect = timer.get_rect()
                     info_text_rect.bottomleft = (
-                    (i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
+                        (i + 2.5) * size, pygame.display.get_surface().get_height() - 0.3 * size)
                     self.display_surface.blit(info_text, info_text_rect)
 
                     info_text = font.render(f'{player.costs[str(i + 8)]}', True, (55, 55, 55))
@@ -797,9 +815,21 @@ class Game:
         self.seller_group = pygame.sprite.Group()
         self.seller_box_group = pygame.sprite.Group()
 
-        self.player = Player(self.camera_group, (data['Player Position'][0] * size, data['Player Position'][1] * size),
-                             status=1, limited_group=self.limited_group, seller_group=self.seller_group,
-                             seller_box_group=self.seller_box_group)
+        self.local_base_id = {}
+        print(data)
+        try:
+            self.player = Player(self.camera_group,
+                                 (data['Player Position'][0] * size, data['Player Position'][1] * size),
+                                 status=1, limited_group=self.limited_group, seller_group=self.seller_group,
+                                 seller_box_group=self.seller_box_group, player_id=self.net.id)
+        except:
+            self.is_running = False
+            self.game_going = 0
+            return
+        # self.player.id = self.net.id
+        self.local_base_id[self.player.id] = self.player
+        self.base_id.remove(self.net.id)
+        self.base_id.sort()
 
         self.map = data['Package']['Map']
         self.costs = data['Package']['Costs']
@@ -821,10 +851,45 @@ class Game:
         pos_seller = []
         pos_seller_box = []
 
+        self.player2 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
+                              seller_group=self.seller_group, seller_box_group=self.seller_box_group,
+                              player_id=self.base_id[0])
+        # self.player2.id = self.base_id[0]
+        self.local_base_id[self.player2.id] = self.player2
+        self.player3 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
+                              seller_group=self.seller_group, seller_box_group=self.seller_box_group,
+                              player_id=self.base_id[1])
+        # self.player3.id = self.base_id[1]
+        self.local_base_id[self.player3.id] = self.player3
+        self.player4 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
+                              seller_group=self.seller_group, seller_box_group=self.seller_box_group,
+                              player_id=self.base_id[2])
+        # self.player4.id = self.base_id[2]
+        self.local_base_id[self.player4.id] = self.player4
+
+        counter = -1
+        print(self.local_base_id)
+        # os._exit(1)
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
                 tile = self.map[y][x]
                 id_tile, id_state = map(str, tile.split(' - '))
+                if id_tile == '4':
+                    counter += 1
+                    print(f'S{counter}', self.player.id)
+                    # os._exit(1)
+                    if f'S{counter}' == self.player.id:
+                        self.player.rect.x = x * self.tile_size
+                        self.player.rect.y = y * self.tile_size
+                    # elif f'S{counter}' == self.player2.id:
+                    #     self.player2.rect.x = x * self.tile_size
+                    #     self.player2.rect.y = y * self.tile_size
+                    # elif f'S{counter}' == self.player3.id:
+                    #     self.player3.rect.x = x * self.tile_size
+                    #     self.player3.rect.y = y * self.tile_size
+                    # elif f'S{counter}' == self.player4.id:
+                    #     self.player4.rect.x = x * self.tile_size
+                    #     self.player4.rect.y = y * self.tile_size
                 if id_tile == '5':
                     pos_seller = [x, y]
                     continue
@@ -838,13 +903,6 @@ class Game:
         self.player.money = data['Package']['Money']
         self.player.seed_type_can_use = data['Package']['Available Items']['Seeds']
 
-        self.player2 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
-                              seller_group=self.seller_group, seller_box_group=self.seller_box_group)
-        self.player3 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
-                              seller_group=self.seller_group, seller_box_group=self.seller_box_group)
-        self.player4 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
-                              seller_group=self.seller_group, seller_box_group=self.seller_box_group)
-        self.base_id.remove(self.net.id)
         self.camera_group.map = self.map
 
         self.bd1 = Border(-self.tile_size, -self.tile_size * 2, (len(self.map[0]) + 1) * self.tile_size,
@@ -902,9 +960,34 @@ class Game:
                 else:
                     self.player.animation_type = 2
 
-            data = self.send_data()
+            try:
+                data = self.send_data()
+            except:
+                self.is_running = False
+                self.game_going = False
+                return
 
             self.game_going = data[self.net.id]['Package']['Game Status']
+
+            try:
+                for key in data.keys():
+                    if key == self.base_id[0]:
+                        self.player2.rect.x, self.player2.rect.y, self.player2.status, self.player2.animation_type, \
+                        self.player2.using = self.parse_data(data[key])
+                    if key == self.base_id[1]:
+                        self.player3.rect.x, self.player3.rect.y, self.player3.status, self.player3.animation_type, \
+                        self.player3.using = self.parse_data(data[key])
+                    if key == self.base_id[2]:
+                        self.player4.rect.x, self.player4.rect.y, self.player4.status, self.player4.animation_type, \
+                        self.player4.using = self.parse_data(data[key])
+            except:
+                self.is_running = False
+                self.game_going = False
+                return
+
+            self.player2.change_view()
+            self.player3.change_view()
+            self.player4.change_view()
 
             self.canvas.draw_background()
             self.camera_group.update()
@@ -1106,8 +1189,13 @@ class Game:
             # self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data()
 
             # Players synh
-            data = self.send_data()
-            print(self.package)
+            try:
+                data = self.send_data()
+            except:
+                self.is_running = False
+                self.game_going = False
+                return
+            # print(self.package)
             try:
                 for key in data.keys():
                     if key == self.base_id[0]:

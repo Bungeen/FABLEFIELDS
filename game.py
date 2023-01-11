@@ -158,7 +158,21 @@ class Player(pygame.sprite.Sprite):
                     self.image = self.image_behind_box
 
     def resize_initialization(self, size, fl=False):
-        if self.id in ['S0', 'S2']:
+        if self.id in ['S0']:
+            sprite_sheet_image = pygame.image.load('assets/Character_First_Animated.png').convert_alpha()
+            sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+            self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
+            self.image_left = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+            self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
+            self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
+            self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top_box = sprite_sheet.get_image(5, 32, 32, size, (0, 0, 0))
+            self.image_left_box = sprite_sheet.get_image(7, 32, 32, size, (0, 0, 0))
+            self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
+            self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
+            self.speed = 2 * size
+        elif self.id in ['S1']:
             sprite_sheet_image = pygame.image.load('assets/Character_Second_Animated.png').convert_alpha()
             sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
             self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
@@ -172,8 +186,22 @@ class Player(pygame.sprite.Sprite):
             self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
             self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
             self.speed = 2 * size
-        else:
-            sprite_sheet_image = pygame.image.load('assets/Character_First_Animated.png').convert_alpha()
+        elif self.id in ['S2']:
+            sprite_sheet_image = pygame.image.load('assets/Character_Third_Animated.png').convert_alpha()
+            sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+            self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
+            self.image_left = sprite_sheet.get_image(3, 32, 32, size, (0, 0, 0))
+            self.image_right = sprite_sheet.get_image(2, 32, 32, size, (0, 0, 0))
+            self.image_behind = sprite_sheet.get_image(4, 32, 32, size, (0, 0, 0))
+            self.image_nothing = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
+            self.image_top_box = sprite_sheet.get_image(5, 32, 32, size, (0, 0, 0))
+            self.image_left_box = sprite_sheet.get_image(7, 32, 32, size, (0, 0, 0))
+            self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
+            self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
+            self.speed = 2 * size
+        elif self.id in ['S3']:
+            sprite_sheet_image = pygame.image.load('assets/Character_Fourth_Animated.png').convert_alpha()
             sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
             self.image = sprite_sheet.get_image(0, 32, 32, size, (0, 0, 0))
             self.image_top = sprite_sheet.get_image(1, 32, 32, size, (0, 0, 0))
@@ -773,6 +801,7 @@ class Game:
             self.net = Network(ip, port)
             if self.net.id == '0XE000':
                 self.is_running = False
+                pygame.mixer.music.stop()
                 self.game_going = 0
                 # sys.exit()
                 return
@@ -785,6 +814,7 @@ class Game:
             if df == '0XE000':
                 # print(1)
                 self.is_running = False
+                pygame.mixer.music.stop()
                 self.game_going = 0
                 # sys.exit()
                 return
@@ -793,6 +823,7 @@ class Game:
                 # os._exit(1)
         except:
             self.is_running = False
+            pygame.mixer.music.stop()
             self.game_going = 0
             # sys.exit()
             return
@@ -804,6 +835,7 @@ class Game:
         data = self.net.send('KEY')
         if data == '0XE000':
             self.is_running = False
+            pygame.mixer.music.stop()
             self.game_going = 0
             # sys.exit()
             return
@@ -824,6 +856,7 @@ class Game:
                                  seller_box_group=self.seller_box_group, player_id=self.net.id)
         except:
             self.is_running = False
+            pygame.mixer.music.stop()
             self.game_going = 0
             return
         # self.player.id = self.net.id
@@ -840,6 +873,7 @@ class Game:
         # Game already going - DISCONNECT
         if self.game_going:
             self.is_running = False
+            pygame.mixer.music.stop()
             self.game_going = 0
             print('Game already going')
             # sys.exit()
@@ -873,6 +907,8 @@ class Game:
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
                 tile = self.map[y][x]
+                # print(tile, type(tile), x, y)
+                # print(self.map)
                 id_tile, id_state = map(str, tile.split(' - '))
                 if id_tile == '4':
                     counter += 1
@@ -931,6 +967,8 @@ class Game:
     def run(self):
         clock = pygame.time.Clock()
         using = 0
+        pygame.mixer.music.load('assets/music.wav')
+        pygame.mixer.music.play(-1, 0.0)
         # print(self.is_running)
         while not self.game_going and self.is_running:
             clock.tick(20)
@@ -941,15 +979,25 @@ class Game:
                         os._exit(1)
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
+                        pygame.mixer.music.stop()
                         self.game_going = 0
+                        pygame.mixer.music.stop()
                         # sys.exit()
                         return
                         # m = Menu(self.canvas.width, self.canvas.height)
                         # m.run()
                         # os._exit(1)
+                    if event.key == pygame.K_PAGEDOWN:
+                        if pygame.mixer.music.get_volume() - 0.05 >= 0:
+                            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.05)
+                    if event.key == pygame.K_PAGEUP:
+                        if pygame.mixer.music.get_volume() + 0.05 <= 1:
+                            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.05)
                 if event.type == pygame.QUIT:
                     self.is_running = False
+                    pygame.mixer.music.stop()
                     self.game_going = 0
+                    pygame.mixer.music.stop()
                     print('EXIT')
                     os._exit(1)
 
@@ -964,6 +1012,7 @@ class Game:
                 data = self.send_data()
             except:
                 self.is_running = False
+                pygame.mixer.music.stop()
                 self.game_going = False
                 return
 
@@ -982,6 +1031,7 @@ class Game:
                         self.player4.using = self.parse_data(data[key])
             except:
                 self.is_running = False
+                pygame.mixer.music.stop()
                 self.game_going = False
                 return
 
@@ -1013,13 +1063,21 @@ class Game:
                         os._exit(1)
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
+                        pygame.mixer.music.stop()
                         self.game_going = 0
                         return
                         # m = Menu(self.canvas.width, self.canvas.height)
                         # m.run()
                         # os._exit(1)
+                    if event.key == pygame.K_PAGEDOWN:
+                        if pygame.mixer.music.get_volume() - 0.05 >= 0:
+                            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.05)
+                    if event.key == pygame.K_PAGEUP:
+                        if pygame.mixer.music.get_volume() + 0.05 <= 1:
+                            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.05)
                 if event.type == pygame.QUIT:
                     self.is_running = False
+                    pygame.mixer.music.stop()
                     self.game_going = 0
                     print('EXIT')
                     os._exit(1)
@@ -1193,6 +1251,7 @@ class Game:
                 data = self.send_data()
             except:
                 self.is_running = False
+                pygame.mixer.music.stop()
                 self.game_going = False
                 return
             # print(self.package)
@@ -1229,6 +1288,7 @@ class Game:
                                 # print(data[key]['Package']['Map'])
             except:
                 self.is_running = False
+                pygame.mixer.music.stop()
                 self.game_going = False
                 return
 
@@ -1264,6 +1324,7 @@ class Game:
         # print(reply, "GET_DATA_GAME")
         if reply == '0XE000':
             self.is_running = False
+            pygame.mixer.music.stop()
             self.game_going = False
             # sys.exit()
             return

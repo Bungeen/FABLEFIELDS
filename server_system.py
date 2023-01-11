@@ -58,27 +58,33 @@ class Server:
         self.money = 0
         self.data_base = {'8': [30, 15, 20, 60], '9': [40, 15, 15, 40], '10': [45, 20, 20, 45], '11': [100, 25, 20, 30],
                           '12': [50, 25, 30, 85], '13': [55, 25, 25, 80], '14': [90, 50, 35, 70],
-                          '15': [240, 60, 30, 25],
+                          '15': [240, 80, 30, 25],
                           '16': [90, 40, 40, 60]}
         self.game_going = 0
-        self.timer = 300
+        self.timer = 600
         self.break_fl = 1
 
         self.TEST_MAP = []
+        random.seed(time.time())
         choice = random.randint(1, 3)
-        if choice <= 2:
-            with open("maps/mapp.txt", 'r', encoding='utf8') as f:
+        if choice == 1:
+            with open("maps/map_one.txt", 'r', encoding='utf8') as f:
+                base = f.read().split('\n')
+                for el in base:
+                    self.TEST_MAP += [el.split(', ')]
+                f.close()
+        elif choice == 2:
+            with open("maps/map_two.txt", 'r', encoding='utf8') as f:
                 base = f.read().split('\n')
                 for el in base:
                     self.TEST_MAP += [el.split(', ')]
                 f.close()
         else:
-            with open("maps/mapp_1.txt", 'r', encoding='utf8') as f:
+            with open("maps/map_three.txt", 'r', encoding='utf8') as f:
                 base = f.read().split('\n')
                 for el in base:
                     self.TEST_MAP += [el.split(', ')]
                 f.close()
-
         # self.TEST_MAP = [['1 - 0', '1 - 0', '4 - 0', '4 - 0', '4 - 0', '4 - 0', '1 - 0', '1 - 0'],
         #                  ['1 - 0', '3 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
         #                  ['1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0', '1 - 0'],
@@ -120,7 +126,7 @@ class Server:
                                     id_state = '3'
                             choice = random.randint(1, self.data_base[id_tile][3])
                             tmp += choice
-                            if choice <= 5:
+                            if choice <= 3:
                                 id_state = 0
                                 id_tile = 0
                                 self.efficiency /= 1.3
@@ -141,7 +147,7 @@ class Server:
                             choice = random.randint(1, self.data_base[id_tile][2])
                             tmp += choice
                             print(choice, x, y, 'DRO')
-                            if choice <= 5:
+                            if choice <= 3:
                                 if id_state == '4':
                                     id_state = '1'
                                 elif id_state == '5':
@@ -161,7 +167,7 @@ class Server:
                             choice = random.randint(1, 100)
                             tmp += choice
                             print(choice, x, y, 'DRO-00')
-                            if choice <= 5:
+                            if choice <= 2:
                                 id_state = '0'
                             new_tile = f"{id_tile} - {id_state}"
                             changes += [(x, y), new_tile]

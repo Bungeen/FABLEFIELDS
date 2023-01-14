@@ -37,10 +37,13 @@ class Menu:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     tmp = self.widget.checking_button(mouse_position)
-                    if tmp == 'play':
+                    if tmp == 'tutorial':
+                        m = Tutorial(self.width, self.height)
+                        m.run()
+                    elif tmp == 'play':
                         m = Connection_Menu(self.width, self.height)
                         m.run()
-                    if tmp == 'exit':
+                    elif tmp == 'exit':
                         os._exit(1)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
@@ -91,6 +94,9 @@ class Connection_Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         os._exit(1)
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_running = False
+                        return
                 if event.type == pygame.QUIT:
                     os._exit(1)
                     self.is_running = False
@@ -163,6 +169,9 @@ class Connection_Input_Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         os._exit(1)
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_running = False
+                        return
                     if self.first_input:
                         if event.key == pygame.K_BACKSPACE:
                             self.username = self.username[:-1]
@@ -270,6 +279,9 @@ class Create_Server_Input_Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         os._exit(1)
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_running = False
+                        return
                     if self.first_input:
                         if event.key == pygame.K_BACKSPACE:
                             self.username = self.username[:-1]
@@ -303,6 +315,42 @@ class Create_Server_Input_Menu:
             text_port = font.render(self.port, True, (255, 255, 255))
             text_port_rect = text_port.get_rect(center=self.widget.get_center('Port_Input'))
             self.screen.blit(text_port, text_port_rect)
+            pygame.display.update()
+
+        pygame.quit()
+
+
+class Tutorial:
+    def __init__(self, w, h):
+        pygame.font.init()
+        pygame.init()
+        self.width = w
+        self.height = h
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        pygame.display.set_caption('FABLEFIELDS')
+
+        self.is_running = True
+        self.group = pygame.sprite.Group()
+        self.widget = pygame.image.load("assets/tutorial_of_Fable.png").convert_alpha()
+
+    def run(self):
+        # game loop
+        while self.is_running:
+            self.screen.fill('#6CAD34')
+            mouse_position = pygame.mouse.get_pos()
+
+            # event-handler
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F10:
+                        os._exit(1)
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_running = False
+                        return
+                if event.type == pygame.QUIT:
+                    os._exit(1)
+                    self.is_running = False
+            self.screen.blit(self.widget, (0, 0))
             pygame.display.update()
 
         pygame.quit()

@@ -40,7 +40,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, group, pos, player_id='', status=0, limited_group=pygame.sprite.Group(),
                  seller_group=pygame.sprite.Group(), seller_box_group=pygame.sprite.Group()):
         super().__init__(group)
-        sprite_sheet_image = pygame.image.load('assets/Character_Anim.png').convert_alpha()
+        sprite_sheet_image = pygame.image.load('assets/Character_First_Animated.png').convert_alpha()
         sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
         self.image = sprite_sheet.get_image(0, 32, 32, 4.5, (0, 0, 0))
         self.image_top = sprite_sheet.get_image(1, 32, 32, 4.5, (0, 0, 0))
@@ -56,7 +56,6 @@ class Player(pygame.sprite.Sprite):
                    pygame.display.get_surface().get_height() / (8 * 32))
 
         self.status = status
-
         self.animation_type = 0
         self.using = 0
         self.tool_type = 0

@@ -1,26 +1,12 @@
 import os
-import sys
 import time
-import json
-import ast
 
 import pygame
-import pytmx
 
 import spritesheet
 
 from network import Network
-from menu import Menu
 
-
-# def load_image(name, colorkey=None):
-#     fullname = os.path.join('assets', name)
-#     # если файл не существует, то выходим
-#     if not os.path.isfile(fullname):
-#         print(f"Файл с изображением '{fullname}' не найден")
-#         sys.exit()
-#     image = pygame.image.load(fullname)
-#     return image
 
 class Border(pygame.sprite.Sprite):
     def __init__(self, x1, y1, x2, y2, all_sprites, limited_group, display=False):
@@ -87,15 +73,12 @@ class Player(pygame.sprite.Sprite):
         self.score = 0
         self.id = player_id
 
-        self.resize_initialization(size, True)
+        self.resize_initialization(size)
         self.direction = pygame.math.Vector2()
         self.speed = 2 * size
         self.rect = self.image.get_rect()
-        # print(pos[0], pos[1])
         self.rect.x = pos[0]
         self.rect.y = pos[1]
-        # print(pygame.display.get_surface().get_width(), pygame.display.get_surface().get_height())
-        # print(self.rect.x, self.rect.y)
         self.coordinates = pygame.math.Vector2(0, 0)
         self.old_size = size
 
@@ -157,7 +140,7 @@ class Player(pygame.sprite.Sprite):
                 elif self.status == 4:
                     self.image = self.image_behind_box
 
-    def resize_initialization(self, size, fl=False):
+    def resize_initialization(self, size):
         if self.id in ['S0']:
             sprite_sheet_image = pygame.image.load('assets/Character_First_Animated.png').convert_alpha()
             sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
@@ -214,18 +197,14 @@ class Player(pygame.sprite.Sprite):
             self.image_right_box = sprite_sheet.get_image(6, 32, 32, size, (0, 0, 0))
             self.image_behind_box = sprite_sheet.get_image(8, 32, 32, size, (0, 0, 0))
             self.speed = 2 * size
-        # if not fl:
-        # print(self.rect)
-        # self.rect.x += (size - self.old_size) * 32
-        # self.rect.y += (size - self.old_size) * 32
-        # print(self.rect)
+
         self.old_size = size
         if self.status == 0:
             self.image = self.image_nothing
             return
         self.image = self.image_top
 
-    def move(self, dirn):
+    def move(self):
         self.activating()
 
     def update(self):
@@ -236,7 +215,6 @@ class Player(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, self.seller_group):
             if self.animation_type in range(8, 17):
                 self.animation_type += 30
-                # print(self.animation_type)
 
         if pygame.sprite.spritecollideany(self, self.seller_box_group):
             self.can_buy = 1
@@ -251,12 +229,6 @@ class CameraGroup(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
         self.display_surface = pygame.display.get_surface()
-        # self.ground_surf = pygame.image.load("graphics/ground.png").convert()
-        # size = max(int(pygame.display.get_surface().get_width() / (13 * 32)),
-        #            int(pygame.display.get_surface().get_height() / (8 * 32)))
-        # self.ground_surf = pygame.transform.scale(self.ground_surf, (
-        # self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
-        # self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
         # Offset
         self.offset = pygame.math.Vector2()
@@ -273,8 +245,6 @@ class CameraGroup(pygame.sprite.Group):
                 (self.tile_size, self.tile_size))},
             '1': pygame.transform.scale(pygame.image.load("assets/Grass.png").convert_alpha(),
                                         (self.tile_size, self.tile_size)),
-            # '2': pygame.transform.scale(pygame.image.load("assets/test_grass_2.png").convert_alpha(),
-            #                             (self.tile_size, self.tile_size)),
             '3': pygame.transform.scale(pygame.image.load("assets/Water.png").convert_alpha(),
                                         (self.tile_size, self.tile_size)),
             '4': pygame.transform.scale(pygame.image.load("assets/Base_Plate.png").convert_alpha(),
@@ -505,6 +475,7 @@ class CameraGroup(pygame.sprite.Group):
                                   pygame.image.load('assets/Eggplant_Icon_Bought.png').convert_alpha(),
                                   (size, size))},
                           }
+
         # IMPORTANT. LOADING SAVE #################################
         # with open("maps/mapp.txt", 'r', encoding='utf8') as f:
         #     base = f.read().split('\n')
@@ -515,23 +486,6 @@ class CameraGroup(pygame.sprite.Group):
         # print(self.map)
         # os._exit(1)
         ###########################################################
-
-        # self.map = pytmx.load_pygame("maps\mappp.tmx")
-        # size = max(pygame.display.get_surface().get_width() / (13 * 32),
-        #            pygame.display.get_surface().get_height() / (8 * 32))
-        # for y in range(20):
-        #     for x in range(30):
-        #         image = pygame.transform.scale(self.map.get_tile_image(x, y, 0), (size * 32, size * 32))
-        #         self.map.set_tile_properties(x, y, image)
-        # for tile_object in self.map.tmxdata.objects:
-        #     tile_object.x *= int(400 / self.map.tilesize)
-        #     tile_object.y *= int(400 / self.map.tilesize)
-
-        # def resize_initialization(self, size):
-        # self.ground_surf = pygame.image.load("graphics/ground.png").convert()
-        # self.ground_surf = pygame.transform.scale(self.ground_surf, (
-        #    self.ground_surf.get_size()[0] * size, self.ground_surf.get_size()[1] * size))
-        # self.ground_rect = self.ground_surf.get_rect(topleft=(0, 0))
 
     def center_target_camera(self, target):
         self.offset.x = target.rect.centerx - self.half_width
@@ -544,6 +498,8 @@ class CameraGroup(pygame.sprite.Group):
 
         size = max(pygame.display.get_surface().get_width() / (13 * 32),
                    pygame.display.get_surface().get_height() / (8 * 32))
+
+        # ground display
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
                 tile = self.map[y][x]
@@ -551,32 +507,14 @@ class CameraGroup(pygame.sprite.Group):
                 ground_offset = (x * self.tile_size - self.offset[0], y * self.tile_size - self.offset[1])
                 if id_tile == '5':
                     self.display_surface.blit(seller.image, ground_offset)
-                    # seller.rect.topleft = ground_offset
-                    # pygame.draw.rect(self.display_surface, '#FF00FF', seller.rect)
                     continue
                 if id_tile == '6':
                     self.display_surface.blit(seller_box.image, ground_offset)
-                    # seller_box.rect.topleft = ground_offset
-                    # pygame.draw.rect(self.display_surface, '#FFFF00', seller_box.rect)
                     continue
-                # print(id_tile)
                 if type(self.tiled_base[id_tile]) == dict:
                     self.display_surface.blit(self.tiled_base[id_tile][id_state], ground_offset)
                 else:
                     self.display_surface.blit(self.tiled_base[id_tile], ground_offset)
-        # pygame.draw.rect(self.display_surface, '#FF0000', player.rect)
-        # player.rect.topleft = (pygame.display.get_surface().get_width() / 2 - size / 2, pygame.display.get_surface().get_height() / 2 - size / 2)
-        # for y in range(20):
-        #     for x in range(30):
-        #         image = pygame.transform.scale(self.map.get_tile_image(x, y, 0), (size * 32, size * 32))
-        #         ground_offset = (x * self.map.tilewidth - self.offset[0], y * self.map.tilewidth - self.offset[1])
-        #         # ground_offset = (x * size * 8, y * size * 8)
-        #         # print(ground_offset)
-        #         self.display_surface.blit(image, ground_offset) # (, y * size)
-
-        # ground
-        # ground_offset = self.ground_rect.topleft - self.offset
-        # self.display_surface.blit(self.ground_surf, ground_offset)
 
         # active elements
         for sprite in sorted(self.sprites(), key=lambda sprite: sprite.rect.centery):
@@ -677,8 +615,8 @@ class CameraGroup(pygame.sprite.Group):
                         try:
                             if self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[
                                 0] not in player.seeds_id or \
-                                    self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[1] not in ['3',
-                                                                                                                 '6'] or \
+                                    self.map[player.using_tile[1]][player.using_tile[0]].split(' - ')[1] not \
+                                    in ['3', '6'] or \
                                     player.animation_type != 0:
                                 image_selected = pygame.transform.scale(pygame.image.load('assets/Bad_Selected.png'),
                                                                         (self.tile_size, self.tile_size))
@@ -792,8 +730,7 @@ class Game:
         size = max(pygame.display.get_surface().get_width() / (13 * 32),
                    pygame.display.get_surface().get_height() / (8 * 32))
         self.tile_size = int(size * 32)
-        # print(self.width, self.height)
-        self.canvas = Canvas(self.width, self.height)
+        self.canvas = Canvas()
         self.all_sprites = pygame.sprite.Group()
         self.camera_group = CameraGroup()
         self.is_running = True
@@ -803,52 +740,31 @@ class Game:
                 self.is_running = False
                 pygame.mixer.music.stop()
                 self.game_going = 0
-                # sys.exit()
                 return
-                # m = Menu(w, h)
-                # m.run()
-                # os._exit(1)
             data = username
-            # print(data)
             df = self.net.send(data)
             if df == '0XE000':
-                # print(1)
                 self.is_running = False
                 pygame.mixer.music.stop()
                 self.game_going = 0
-                # sys.exit()
                 return
-                # m = Menu(w, h)
-                # m.run()
-                # os._exit(1)
         except:
             self.is_running = False
             pygame.mixer.music.stop()
             self.game_going = 0
-            # sys.exit()
             return
-            # m = Menu(w, h)
-            # m.run()
-            # os._exit(1)
-
-        # Take information about self
+        # Take information about session
         data = self.net.send('KEY')
         if data == '0XE000':
             self.is_running = False
             pygame.mixer.music.stop()
             self.game_going = 0
-            # sys.exit()
             return
-            # m = Menu(w, h)
-            # m.run()
-            # os._exit(1)
 
         self.limited_group = pygame.sprite.Group()
         self.seller_group = pygame.sprite.Group()
         self.seller_box_group = pygame.sprite.Group()
-
         self.local_base_id = {}
-        print(data)
         try:
             self.player = Player(self.camera_group,
                                  (data['Player Position'][0] * size, data['Player Position'][1] * size),
@@ -859,7 +775,6 @@ class Game:
             pygame.mixer.music.stop()
             self.game_going = 0
             return
-        # self.player.id = self.net.id
         self.local_base_id[self.player.id] = self.player
         self.base_id.remove(self.net.id)
         self.base_id.sort()
@@ -876,11 +791,7 @@ class Game:
             pygame.mixer.music.stop()
             self.game_going = 0
             print('Game already going')
-            # sys.exit()
             return
-            # m = Menu(w, h)
-            # m.run()
-            # os._exit(1)
 
         pos_seller = []
         pos_seller_box = []
@@ -888,44 +799,27 @@ class Game:
         self.player2 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
                               seller_group=self.seller_group, seller_box_group=self.seller_box_group,
                               player_id=self.base_id[0])
-        # self.player2.id = self.base_id[0]
         self.local_base_id[self.player2.id] = self.player2
         self.player3 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
                               seller_group=self.seller_group, seller_box_group=self.seller_box_group,
                               player_id=self.base_id[1])
-        # self.player3.id = self.base_id[1]
         self.local_base_id[self.player3.id] = self.player3
         self.player4 = Player(self.camera_group, (100, 100), status=0, limited_group=self.limited_group,
                               seller_group=self.seller_group, seller_box_group=self.seller_box_group,
                               player_id=self.base_id[2])
-        # self.player4.id = self.base_id[2]
         self.local_base_id[self.player4.id] = self.player4
 
         counter = -1
-        print(self.local_base_id)
-        # os._exit(1)
         for y in range(len(self.map)):
             for x in range(len(self.map[0])):
                 tile = self.map[y][x]
-                # print(tile, type(tile), x, y)
-                # print(self.map)
                 id_tile, id_state = map(str, tile.split(' - '))
                 if id_tile == '4':
                     counter += 1
                     print(f'S{counter}', self.player.id)
-                    # os._exit(1)
                     if f'S{counter}' == self.player.id:
                         self.player.rect.x = x * self.tile_size
                         self.player.rect.y = y * self.tile_size
-                    # elif f'S{counter}' == self.player2.id:
-                    #     self.player2.rect.x = x * self.tile_size
-                    #     self.player2.rect.y = y * self.tile_size
-                    # elif f'S{counter}' == self.player3.id:
-                    #     self.player3.rect.x = x * self.tile_size
-                    #     self.player3.rect.y = y * self.tile_size
-                    # elif f'S{counter}' == self.player4.id:
-                    #     self.player4.rect.x = x * self.tile_size
-                    #     self.player4.rect.y = y * self.tile_size
                 if id_tile == '5':
                     pos_seller = [x, y]
                     continue
@@ -956,20 +850,12 @@ class Game:
 
         self.package = {'World change': []}
 
-    # def render(self, screen):
-    #     for y in range(20):
-    #         for x in range(30):
-    #             image = self.map.get_tile_image(x, y, 0)
-    #             size = max(pygame.display.get_surface().get_width() / (13 * 32),
-    #                        pygame.display.get_surface().get_height() / (8 * 32))
-    #             screen.blit(image, (x * size, y * size))
-
     def run(self):
         clock = pygame.time.Clock()
         using = 0
         pygame.mixer.music.load('assets/music.wav')
         pygame.mixer.music.play(-1, 0.0)
-        # print(self.is_running)
+        print(self.game_going, self.is_running)
         while not self.game_going and self.is_running:
             clock.tick(20)
             self.package = {'World change': []}
@@ -982,11 +868,7 @@ class Game:
                         pygame.mixer.music.stop()
                         self.game_going = 0
                         pygame.mixer.music.stop()
-                        # sys.exit()
                         return
-                        # m = Menu(self.canvas.width, self.canvas.height)
-                        # m.run()
-                        # os._exit(1)
                     if event.key == pygame.K_PAGEDOWN:
                         if pygame.mixer.music.get_volume() - 0.05 >= 0:
                             pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.05)
@@ -1007,7 +889,6 @@ class Game:
                     self.player.animation_type = 0
                 else:
                     self.player.animation_type = 2
-
             try:
                 data = self.send_data()
             except:
@@ -1017,7 +898,6 @@ class Game:
                 return
 
             self.game_going = data[self.net.id]['Package']['Game Status']
-
             try:
                 for key in data.keys():
                     if key == self.base_id[0]:
@@ -1066,9 +946,6 @@ class Game:
                         pygame.mixer.music.stop()
                         self.game_going = 0
                         return
-                        # m = Menu(self.canvas.width, self.canvas.height)
-                        # m.run()
-                        # os._exit(1)
                     if event.key == pygame.K_PAGEDOWN:
                         if pygame.mixer.music.get_volume() - 0.05 >= 0:
                             pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.05)
@@ -1131,10 +1008,8 @@ class Game:
             if not self.player.changer:
                 if keys[pygame.K_f]:
                     if not self.player.using:
-                        # os._exit(1)
                         if self.player.using_tile != (
                                 -100000, -100000) and self.player.tool_type == 1 and self.player.can_do:
-                            # os._exit(1)
                             if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] < len(
                                     self.map[0]):
                                 tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
@@ -1146,7 +1021,6 @@ class Game:
                                 tile_state = 0
                                 new_tile = f"{tile_id} - {tile_state}"
                                 self.package['World change'] = [self.player.using_tile, new_tile]
-                                # print(new_tile, tile)
                                 self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 2:
@@ -1162,7 +1036,6 @@ class Game:
                                         tile_state = '1'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
-                                    # print(new_tile, tile)
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 3:
@@ -1179,7 +1052,6 @@ class Game:
                                     tile_id = '0'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
-                                    # print(new_tile, tile)
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
                         if self.player.tool_type == 4:
@@ -1201,14 +1073,11 @@ class Game:
                                             if tile_state == '3':
                                                 tile_state = '6'
                                             self.player.bucket_status = 0
-                                    # tile_state = '1'
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
-                                    # print(new_tile, tile)
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
                             self.player.using = 15
 
-            # print(self.player.animation_type)
             if self.player.can_buy and self.player.animation_type == 0:
                 if keys[pygame.K_2] and self.costs['9'] <= self.player.money \
                         and '9' not in self.player.seed_type_can_use:
@@ -1244,8 +1113,6 @@ class Game:
                 self.player.rect.y = self.tile_size
 
             # Send Network Stuff
-            # self.player2.rect.x, self.player2.rect.y, self.player2.is_active = self.parse_data()
-
             # Players synh
             try:
                 data = self.send_data()
@@ -1254,7 +1121,6 @@ class Game:
                 pygame.mixer.music.stop()
                 self.game_going = False
                 return
-            # print(self.package)
             try:
                 for key in data.keys():
                     if key == self.base_id[0]:
@@ -1285,7 +1151,6 @@ class Game:
                                 self.camera_group.map = data[key]['Package']['Map'].copy()
                             elif key_package == 'Score':
                                 self.player.score = int(data[key]['Package']['Score'])
-                                # print(data[key]['Package']['Map'])
             except:
                 self.is_running = False
                 pygame.mixer.music.stop()
@@ -1310,10 +1175,9 @@ class Game:
         data = {'ID': self.net.id, 'Player Position': (self.player.rect.x / size, self.player.rect.y / size),
                 'Player Status': self.player.status, 'Player Animation Type': self.player.animation_type,
                 'Player Using State': self.player.using, 'Package': self.package}
-        # print(data)
-        # data = str(self.net.id) + ":" + str(self.player.rect.x) + "," + str(self.player.rect.y) + ',1'
-        # print(data)
         reply = self.net.send(data)
+
+        # DEBUG LOGS
         # tmp_2 = open('DEBUG.txt', 'r')
         # ttt = tmp_2.readlines()
         # tmp_2.close()
@@ -1322,15 +1186,12 @@ class Game:
         # tmp_1.writelines(tmp_3)
         # tmp_1.close()
         # print(reply, "GET_DATA_GAME")
+
         if reply == '0XE000':
             self.is_running = False
             pygame.mixer.music.stop()
             self.game_going = False
-            # sys.exit()
             return
-            # m = Menu(self.canvas.width, self.canvas.height)
-            # m.run()
-            # sys.exit()
         return reply
 
     @staticmethod
@@ -1340,19 +1201,14 @@ class Game:
                        pygame.display.get_surface().get_height() / (8 * 32))
             d = [data['Player Position'][0] * size, data['Player Position'][1] * size, data['Player Status'],
                  data['Player Animation Type'], data['Player Using State']]
-            # print(int(d[0]), int(d[1]), bool(int(d[2])))
             return int(d[0]), int(d[1]), int(d[2]), int(d[3]), int(d[4])
         except:
             return 0, 0, 0
 
 
-class Canvas(Menu):
-
-    def __init__(self, w, h):
-        super().__init__(w, h)
-        # self.initialization_screen()
+class Canvas:
+    def __init__(self):
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        # print(self.width, self.height)
 
     @staticmethod
     def update():

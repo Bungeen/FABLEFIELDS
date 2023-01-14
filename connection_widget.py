@@ -34,8 +34,6 @@ class Connection_Widget(pygame.sprite.Sprite):
     def get_center(self, key):
         if key not in ['Username_Input', 'IP_Input', 'Port_Input']:
             return None
-        # tmp = (int((self.buttons_base[key][0][0] + self.buttons_base[key][1][0]) / 2),
-        #        int((self.buttons_base[key][0][1] + self.buttons_base[key][1][1]) / 2))
         tmp_rect = pygame.rect.Rect(self.buttons_base[key][0][0], self.buttons_base[key][0][1],
                                     abs(self.buttons_base[key][0][0] - self.buttons_base[key][1][0]),
                                     abs(self.buttons_base[key][0][1] - self.buttons_base[key][1][1]))

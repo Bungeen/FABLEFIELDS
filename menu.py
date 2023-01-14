@@ -1,19 +1,15 @@
 import os
+import time
+from _thread import start_new_thread
 
 import pygame
-import time
-import sys
-from _thread import *
-from multiprocessing import Process
+
+import game
 
 from menu_widget import Menu_Widget
 from select_game_widget import Select_Game_Widget
 from connection_widget import Connection_Widget
 from server_system import Server
-
-import connection_menu
-
-import game
 
 
 class Menu:
@@ -31,12 +27,6 @@ class Menu:
         self.font = pygame.font.Font("assets/font.ttf", 40)
         self.TEXT_COLOR = "#FFFFFF"
 
-    # Doesn't need maybe
-    def draw_text(self, x, y, text, font, text_color):
-        image = self.font.render(text, True, text_color)
-        place = image.get_rect(center=(x, y))
-        self.screen.blit(image, place)
-
     def run(self):
         # game loop
         while self.is_running:
@@ -50,8 +40,6 @@ class Menu:
                     if tmp == 'play':
                         m = Connection_Menu(self.width, self.height)
                         m.run()
-                        # self.is_running = False
-                        # os._exit(1)
                     if tmp == 'exit':
                         os._exit(1)
                 if event.type == pygame.KEYDOWN:
@@ -78,15 +66,7 @@ class Connection_Menu:
         self.is_running = True
         self.group = pygame.sprite.Group()
         self.widget = Select_Game_Widget(self.group, pygame.image.load("assets/Select_Game.png").convert_alpha())
-        # self.widget = Menu_Widget(self.group, pygame.image.load("assets/menu.png").convert_alpha())
         self.font = pygame.font.Font("assets/font.ttf", 40)
-        # self.TEXT_COLOR = "#FFFFFF"
-
-    # Doesn't need maybe
-    def draw_text(self, x, y, text, font, text_color):
-        image = self.font.render(text, True, text_color)
-        place = image.get_rect(center=(x, y))
-        self.screen.blit(image, place)
 
     def run(self):
         # game loop
@@ -96,14 +76,8 @@ class Connection_Menu:
 
             # event-handler
             for event in pygame.event.get():
-                # if event.type == pygame.MOUSEBUTTONDOWN:
-                #     tmp = self.widget.checking_button(mouse_position)
-                #     if tmp == 'multiplayer':
-                #         g = game.Game(self.width, self.height)
-                #         g.run()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     tmp = self.widget.checking_button(mouse_position)
-                    # print(tmp)
                     if tmp == 'back':
                         m = Menu(500, 500)
                         m.run()
@@ -117,11 +91,6 @@ class Connection_Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F10:
                         os._exit(1)
-                    # if event.key == pygame.K_RETURN:
-                    #     g = game.Game(self.width, self.height, '188.235.166.223', 5555)
-                    #     g.run()
-                    #     os._exit(1)
-                    #     # print(123)
                 if event.type == pygame.QUIT:
                     os._exit(1)
                     self.is_running = False
@@ -143,7 +112,6 @@ class Connection_Input_Menu:
         self.is_running = True
         self.group = pygame.sprite.Group()
         self.widget = Connection_Widget(self.group, pygame.image.load("assets/Connection_Menu.png").convert_alpha())
-        # self.widget = Menu_Widget(self.group, pygame.image.load("assets/menu.png").convert_alpha())
         self.font = pygame.font.Font("assets/font.ttf", 40)
 
         self.ip = 'localhost'
@@ -152,13 +120,6 @@ class Connection_Input_Menu:
         self.first_input = False
         self.second_input = False
         self.third_input = False
-        # self.TEXT_COLOR = "#FFFFFF"
-
-    # Doesn't need maybe
-    def draw_text(self, x, y, text, font, text_color):
-        image = self.font.render(text, True, text_color)
-        place = image.get_rect(center=(x, y))
-        self.screen.blit(image, place)
 
     def run(self):
         # game loop
@@ -168,11 +129,6 @@ class Connection_Input_Menu:
 
             # event-handler
             for event in pygame.event.get():
-                # if event.type == pygame.MOUSEBUTTONDOWN:
-                #     tmp = self.widget.checking_button(mouse_position)
-                #     if tmp == 'multiplayer':
-                #         g = game.Game(self.width, self.height)
-                #         g.run()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     tmp = self.widget.checking_button(mouse_position)
                     print(tmp)
@@ -182,14 +138,12 @@ class Connection_Input_Menu:
                         self.third_input = False
                         m = Connection_Menu(self.width, self.height)
                         m.run()
-                        # os._exit(1)
                     elif tmp == 'Connect':
                         self.first_input = False
                         self.second_input = False
                         self.third_input = False
                         g = game.Game(self.width, self.height, self.ip, int(self.port), self.username)
                         g.run()
-                        # os._exit(1)
                     elif tmp == 'IP_Input':
                         self.first_input = False
                         self.second_input = True
@@ -228,11 +182,6 @@ class Connection_Input_Menu:
                             if len(self.port) < 15:
                                 if event.unicode.isdigit():
                                     self.port += event.unicode
-                    # if event.key == pygame.K_RETURN:
-                    #     g = game.Game(self.width, self.height, '188.235.166.223', 5555)
-                    #     g.run()
-                    #     os._exit(1)
-                    #     # print(123)
                 if event.type == pygame.QUIT:
                     os._exit(1)
                     self.is_running = False
@@ -264,7 +213,6 @@ class Create_Server_Input_Menu:
         self.is_running = True
         self.group = pygame.sprite.Group()
         self.widget = Connection_Widget(self.group, pygame.image.load("assets/Create_Server_Menu.png").convert_alpha())
-        # self.widget = Menu_Widget(self.group, pygame.image.load("assets/menu.png").convert_alpha())
         self.font = pygame.font.Font("assets/font.ttf", 40)
 
         self.ip = 'localhost'
@@ -273,13 +221,6 @@ class Create_Server_Input_Menu:
         self.first_input = False
         self.second_input = False
         self.third_input = False
-        # self.TEXT_COLOR = "#FFFFFF"
-
-    # Doesn't need maybe
-    def draw_text(self, x, y, text, font, text_color):
-        image = self.font.render(text, True, text_color)
-        place = image.get_rect(center=(x, y))
-        self.screen.blit(image, place)
 
     def run(self):
         # game loop
@@ -289,29 +230,20 @@ class Create_Server_Input_Menu:
 
             # event-handler
             for event in pygame.event.get():
-                # if event.type == pygame.MOUSEBUTTONDOWN:
-                #     tmp = self.widget.checking_button(mouse_position)
-                #     if tmp == 'multiplayer':
-                #         g = game.Game(self.width, self.height)
-                #         g.run()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     tmp = self.widget.checking_button(mouse_position)
-                    # print(tmp)
                     if tmp == 'Cancel':
                         self.first_input = False
                         self.second_input = False
                         self.third_input = False
                         m = Connection_Menu(self.width, self.height)
                         m.run()
-                        # os._exit(1)
                     elif tmp == 'Connect':
                         self.first_input = False
                         self.second_input = False
                         self.third_input = False
                         server = Server({}, self.ip, int(self.port))
-                        # p = Process(target=server.run)
                         start_new_thread(server.run, ())
-                        # p.start()
                         time.sleep(0.5)
                         g = game.Game(self.width, self.height, self.ip, int(self.port), self.username)
                         g.run()
@@ -319,9 +251,6 @@ class Create_Server_Input_Menu:
                         server.break_fl = 0
                         server.s.close()
                         time.sleep(0.5)
-                        # p.kill()
-                        # print(server.break_fl)
-                        # os._exit(1)
                     elif tmp == 'IP_Input':
                         self.first_input = False
                         self.second_input = True
@@ -360,11 +289,6 @@ class Create_Server_Input_Menu:
                             if len(self.port) < 15:
                                 if event.unicode.isdigit():
                                     self.port += event.unicode
-                    # if event.key == pygame.K_RETURN:
-                    #     g = game.Game(self.width, self.height, '188.235.166.223', 5555)
-                    #     g.run()
-                    #     os._exit(1)
-                    #     # print(123)
                 if event.type == pygame.QUIT:
                     os._exit(1)
                     self.is_running = False

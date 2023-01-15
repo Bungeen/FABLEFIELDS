@@ -5,7 +5,7 @@ import time
 import json
 import random
 
-from _thread import *
+from _thread import start_new_thread
 
 
 class Server:
@@ -41,14 +41,14 @@ class Server:
                    'Package': {'World change': []}}}
 
         self.available_items = ['8']
-        self.costs_for_buy = {'8': 0, '9': 10, '10': 20, '11': 30, '12': 35, '13': 37, '14': 50, '15': 75, '16': 40}
-        self.costs_for_sell = {'8': 3, '9': 6, '10': 8, '11': 10, '12': 9, '13': 9, '14': 20, '15': 27, '16': 7,
-                               '17': 12}
+        self.costs_for_buy = {'8': 0, '9': 10, '10': 40, '11': 60, '12': 70, '13': 87, '14': 110, '15': 175, '16': 240}
+        self.costs_for_sell = {'8': 3, '9': 6, '10': 8, '11': 10, '12': 9, '13': 9, '14': 20, '15': 27, '16': 30,
+                               '17': 45}
         self.money = 0
         self.data_base = {'8': [30, 15, 20, 60], '9': [40, 15, 15, 40], '10': [45, 20, 20, 45], '11': [100, 25, 20, 30],
                           '12': [50, 25, 30, 85], '13': [55, 25, 25, 80], '14': [90, 50, 35, 70],
                           '15': [240, 80, 30, 25],
-                          '16': [90, 40, 40, 60]}
+                          '16': [90, 40, 40, 40]}
         self.game_going = 0
         self.timer = 600
         self.break_fl = 1

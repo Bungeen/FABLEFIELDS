@@ -331,7 +331,9 @@ class Tutorial:
 
         self.is_running = True
         self.group = pygame.sprite.Group()
-        self.widget = pygame.image.load("assets/tutorial_of_Fable.png").convert_alpha()
+        self.widget = pygame.transform.scale(pygame.image.load("assets/tutorial_of_Fable.png").convert_alpha(),
+                                             (pygame.display.get_surface().get_width(),
+                                             pygame.display.get_surface().get_height()))
 
     def run(self):
         # game loop

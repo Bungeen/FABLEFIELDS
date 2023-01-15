@@ -3,6 +3,8 @@ import time
 
 import pygame
 
+from _thread import start_new_thread
+
 import spritesheet
 
 from network import Network
@@ -563,7 +565,7 @@ class CameraGroup(pygame.sprite.Group):
                                                 (self.tile_size, self.tile_size))
             self.display_surface.blit(image_icon, (size_x, size_y))
         elif player.tool_type == 4:
-            if player.bucket_status == 1:
+            if player.bucket_status > 0:
                 image_icon = pygame.transform.scale(pygame.image.load('assets/Bucket_Water.png'),
                                                     (self.tile_size, self.tile_size))
                 self.display_surface.blit(image_icon, (size_x, size_y))
@@ -741,8 +743,14 @@ class Game:
                 self.game_going = 0
                 return
             data = username
-            df = self.net.send(data)
-            if df == '0XE000':
+            try:
+                df = self.net.send(data)
+                if df == '0XE000':
+                    self.is_running = False
+                    pygame.mixer.music.stop()
+                    self.game_going = 0
+                    return
+            except:
                 self.is_running = False
                 pygame.mixer.music.stop()
                 self.game_going = 0
@@ -753,13 +761,18 @@ class Game:
             self.game_going = 0
             return
         # Take information about session
-        data = self.net.send('KEY')
-        if data == '0XE000':
+        try:
+            data = self.net.send('KEY')
+            if data == '0XE000':
+                self.is_running = False
+                pygame.mixer.music.stop()
+                self.game_going = 0
+                return
+        except:
             self.is_running = False
             pygame.mixer.music.stop()
             self.game_going = 0
             return
-
         self.limited_group = pygame.sprite.Group()
         self.seller_group = pygame.sprite.Group()
         self.seller_box_group = pygame.sprite.Group()
@@ -1060,9 +1073,9 @@ class Game:
                                     tile = self.map[self.player.using_tile[1]][self.player.using_tile[0]]
                                     tile_id, tile_state = tile.split(' - ')
                                     if tile_id == '3':
-                                        self.player.bucket_status = 1
+                                        self.player.bucket_status = 5
                                     else:
-                                        if self.player.bucket_status == 1:
+                                        if self.player.bucket_status > 0:
                                             if tile_state == '0':
                                                 tile_state = '7'
                                             if tile_state == '1':
@@ -1071,7 +1084,7 @@ class Game:
                                                 tile_state = '5'
                                             if tile_state == '3':
                                                 tile_state = '6'
-                                            self.player.bucket_status = 0
+                                            self.player.bucket_status -= 1
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
@@ -1167,6 +1180,7 @@ class Game:
             self.canvas.update()
 
         # pygame.quit()
+        pygame.mixer.music.stop()
 
     def send_data(self):
         size = max(pygame.display.get_surface().get_width() / (13 * 32),

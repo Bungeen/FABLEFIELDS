@@ -868,8 +868,11 @@ class Game:
         pygame.mixer.music.load('assets/music.wav')
         pygame.mixer.music.play(-1, 0.0)
         print(self.game_going, self.is_running)
+        using_tab = 0
         while not self.game_going and self.is_running:
             clock.tick(20)
+            if using_tab > 0:
+                using_tab -= 1
             self.package = {'World change': []}
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
@@ -897,10 +900,12 @@ class Game:
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_TAB]:
-                if self.player.animation_type:
-                    self.player.animation_type = 0
-                else:
-                    self.player.animation_type = 2
+                if using_tab <= 0:
+                    if self.player.animation_type:
+                        self.player.animation_type = 0
+                    else:
+                        self.player.animation_type = 2
+                    using_tab = 10
             try:
                 data = self.send_data()
             except:
@@ -1034,7 +1039,7 @@ class Game:
                                 new_tile = f"{tile_id} - {tile_state}"
                                 self.package['World change'] = [self.player.using_tile, new_tile]
                                 self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
-                            self.player.using = 15
+                                self.player.using = 10
                         if self.player.tool_type == 2:
                             if self.player.can_do == 1:
                                 if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] \
@@ -1049,7 +1054,7 @@ class Game:
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
-                            self.player.using = 15
+                                    self.player.using = 10
                         if self.player.tool_type == 3:
                             if self.player.can_do == 1:
                                 if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] \
@@ -1065,7 +1070,7 @@ class Game:
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
-                            self.player.using = 15
+                                    self.player.using = 10
                         if self.player.tool_type == 4:
                             if self.player.can_do == 1:
                                 if 0 <= self.player.using_tile[1] < len(self.map) and 0 <= self.player.using_tile[0] \
@@ -1088,7 +1093,7 @@ class Game:
                                     new_tile = f"{tile_id} - {tile_state}"
                                     self.package['World change'] = [self.player.using_tile, new_tile]
                                     self.map[self.player.using_tile[1]][self.player.using_tile[0]] = new_tile
-                            self.player.using = 15
+                                    self.player.using = 10
 
             if self.player.can_buy and self.player.animation_type == 0:
                 if keys[pygame.K_2] and self.costs['9'] <= self.player.money \
